@@ -1,0 +1,11 @@
+{
+  "name": "hardhat-project",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.10"
+  },
+  "dependencies": {
+    "@onchain-id/solidity": "^2.2.1",
+    "@tokenysolutions/t-rex": "^4.1.4"
+  }
+}
