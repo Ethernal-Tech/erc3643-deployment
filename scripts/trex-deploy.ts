@@ -149,17 +149,14 @@ async function main() {
   // Below are usage examples, this doesn't belong to token deployment but needs to be done before token production
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // 1. this does user, this is his/hers onchainid identity (here goes user wallet in order to get userIdentity)
-  // every user must have identity
-  const userIdentity = await deployIdentityProxy(iiaAddress, user.address, user);
-  const txUserIdentity1 = await userIdentity.connect(user)
-    .addKey(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [user.address])), 2, 1);
-  await txUserIdentity1.wait()
+  // 1. this is user setup, this is his/her onchainid identity; every user must have identity
+  // userIdentity smart contract can be deployed by anyone, but only user can manage his account (call addKey)
+  const userIdentity = await deployIdentityProxy(iiaAddress, user.address, deployer);
 
-  // add claim issuer signing key into user identity store, option #1 for addClaim
-  const txUserIdentity2 = await userIdentity.connect(user)
+  // option #1 for addClaim, add claim issuer signing key (type = 3 CLAIM) into user identity store:
+  const txUserIdentity = await userIdentity.connect(user)
     .addKey(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [claimIssuer.address])), 3, 1);
-  await txUserIdentity2.wait()
+  await txUserIdentity.wait()
 
   // 2. this does irAgent; new Contract with irAgent and .connect(irAgent).registerIdentity(user.Address, userIdentity.getAddress())
   // user is unable to add him/her to identity registry storage, this can be done only by irAgent
@@ -189,6 +186,12 @@ async function main() {
   const txAddClaim = await userIdentity.connect(claimIssuer)
     .addClaim(claimForUser.topic, claimForUser.scheme, claimForUser.issuer, claimForUser.signature, claimForUser.data, '');
   await txAddClaim.wait()
+
+  // option #2 for addClaim requires execute/approve pattern like this:
+  // await userIdentity.connect(claimIssuer).execute(userIdentity.getAddress(), reqID, claimAbiData);
+  // await userIdentity.connect(user).approve(reqID, true);
+
+  // option #3, user calls his userIdentity contract .connect(user), he needs to get signed claim from claimIssuer first
 }
 
 // We recommend this pattern to be able to use async/await everywhere
