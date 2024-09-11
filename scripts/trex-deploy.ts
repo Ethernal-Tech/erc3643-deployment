@@ -173,6 +173,7 @@ async function main() {
     scheme: 1,
     identity: await userIdentity.getAddress(),
     signature: '',
+    uri: 'https://example.com'
   };
   claimForUser.signature = await claimIssuer.signMessage(
     ethers.getBytes(
@@ -184,12 +185,28 @@ async function main() {
 
   // add user claim to user onchainid (connect should be possible with claimIssuer due to above addClaim option #1)
   const txAddClaim = await userIdentity.connect(claimIssuer)
-    .addClaim(claimForUser.topic, claimForUser.scheme, claimForUser.issuer, claimForUser.signature, claimForUser.data, '');
+    .addClaim(claimForUser.topic, claimForUser.scheme, claimForUser.issuer, claimForUser.signature, claimForUser.data, claimForUser.uri);
   await txAddClaim.wait()
 
   // option #2 for addClaim requires execute/approve pattern like this:
-  // await userIdentity.connect(claimIssuer).execute(userIdentity.getAddress(), reqID, claimAbiData);
-  // await userIdentity.connect(user).approve(reqID, true);
+  // const claimData = new ethers.Interface([
+  //   'function addClaim(uint256 topic, uint256 scheme, address issuer, bytes calldata signature, bytes calldata data, string calldata uri) external returns (bytes32 claimRequestId)'
+  // ]).encodeFunctionData('addClaim', [
+  //   claimForUser.topic, claimForUser.scheme, claimForUser.issuer, claimForUser.signature, claimForUser.data, claimForUser.uri,
+  // ])
+
+  // // value always 0
+  // const txExecute = await userIdentity.connect(claimIssuer).execute(await userIdentity.getAddress(), 0, claimData);
+  // const receiptExecute = await txExecute.wait()
+  
+  // expect(txExecute).to.emit(userIdentity, 'ExecutionRequested');
+  // const executionNonce = receiptExecute.logs.find((log: EventLog) => log.eventName === 'ExecutionRequested').args[0];
+
+  // const txApprove = await userIdentity.connect(user).approve(executionNonce, true);
+  // await txApprove.wait()
+
+  // expect(txApprove).to.emit(userIdentity, 'Approved');
+  // expect(txApprove).to.emit(userIdentity, 'Executed');
 
   // option #3, user calls his userIdentity contract .connect(user), he needs to get signed claim from claimIssuer first
 }
