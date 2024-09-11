@@ -106,13 +106,11 @@ async function main() {
   const txAddTokenFactory = await identityFactory.connect(deployer).addTokenFactory(await trexFactory.getAddress());
   await txAddTokenFactory.wait()
 
-  // ClaimIssuer is not part of the token deployment, it is needed here in order to test claims!
   const claimIssuerContract = await new ethers.ContractFactory(OnchainID.contracts.ClaimIssuer.abi,
     OnchainID.contracts.ClaimIssuer.bytecode,
-    claimIssuer).deploy(claimIssuer.address)
+    deployer).deploy(claimIssuer.address)
   await claimIssuerContract.waitForDeployment()
-  // ClaimIssuer end
-
+  
   const txDeployTREX = await trexFactory.connect(deployer).deployTREXSuite(
     'salt',
     {
