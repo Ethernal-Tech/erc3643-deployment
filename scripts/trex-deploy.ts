@@ -2,17 +2,7 @@ import { ethers } from "hardhat";
 import OnchainID from '@onchain-id/solidity';
 import { contracts } from '@tokenysolutions/t-rex';
 import { expect } from 'chai';
-import { Signer, EventLog, Contract } from 'ethers';
-
-export async function deployIdentityProxy(implementationAuthority: string, managementKey: string, signer: Signer) {
-  const identity = await new ethers.ContractFactory(OnchainID.contracts.IdentityProxy.abi, OnchainID.contracts.IdentityProxy.bytecode, signer).deploy(
-    implementationAuthority,
-    managementKey,
-  );
-  await identity.waitForDeployment()
-
-  return ethers.getContractAt(OnchainID.contracts.Identity.abi, await identity.getAddress(), signer);
-}
+import { EventLog, Contract } from 'ethers';
 
 async function main() {
   const provider = new ethers.JsonRpcProvider("http://localhost:8545")
@@ -138,10 +128,10 @@ async function main() {
   expect(txDeployTREX).to.emit(identityFactory, 'TokenLinked');
 
   const trexSuiteDeployedEvent = receipt.logs.find((log: EventLog) => log.eventName === 'TREXSuiteDeployed');
-  const iiaAddress = (await identityImplementationAuthority.getAddress()).toString()
+  const identityFactoryAddress = (await identityFactory.getAddress()).toString()
   console.log("Token address -> %s", trexSuiteDeployedEvent.args[0])
   console.log("IdentityRegistry address -> %s", trexSuiteDeployedEvent.args[1])
-  console.log("IdentityImplementationAuthority address -> %s", iiaAddress)
+  console.log("IdentityFactory address -> %s", identityFactoryAddress)
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,23 +139,18 @@ async function main() {
   // Below are usage examples, this doesn't belong to token deployment but needs to be done before token production
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // 1. this is user setup, this is his/her onchainid identity; every user must have identity
-  // userIdentity smart contract can be deployed by anyone, but only user can manage his account (call addKey)
-  const userIdentity = await deployIdentityProxy(iiaAddress, user.address, deployer);
+  // 1. user setup, user identity is created by deployer; only irAgent can add user into identityStorage
+  const idFactory = new Contract(identityFactoryAddress, OnchainID.contracts.Factory.abi, deployer)
+  const txIdFactory = await idFactory.connect(deployer).createIdentity(user.address, 'user');
+  await txIdFactory.wait()
 
-  // option #1 for addClaim, add claim issuer signing key (type = 3 CLAIM) into user identity store:
-  const txUserIdentity = await userIdentity.connect(user)
-    .addKey(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [claimIssuer.address])), 3, 1);
-  await txUserIdentity.wait()
+  const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(user.address));
 
-  // 2. this does irAgent; new Contract with irAgent and .connect(irAgent).registerIdentity(user.Address, userIdentity.getAddress())
-  // user is unable to add him/her to identity registry storage, this can be done only by irAgent
-  const identityRegistry = new Contract(trexSuiteDeployedEvent.args[1], contracts.IdentityRegistry.abi, irAgent)
-  const txIdentityRegistry = await identityRegistry.connect(irAgent)
-    .registerIdentity(user.address, await userIdentity.getAddress(), 666);
-  await txIdentityRegistry.wait()  
+  const idRegistry = new Contract(trexSuiteDeployedEvent.args[1], contracts.IdentityRegistry.abi, irAgent)
+  const txIdRegistry = await idRegistry.connect(irAgent).registerIdentity(user.address, await userIdentity.getAddress(), 666);
+  await txIdRegistry.wait()  
 
-  // 3 user claim
+  // 2 user claim
   const claimForUser = {
     data: ethers.hexlify(ethers.toUtf8Bytes('Some claim public data.')),
     issuer: await claimIssuerContract.getAddress(),
@@ -183,16 +168,19 @@ async function main() {
     ),
   );
 
+  // option #1 for addClaim, add claim issuer signing key (type = 3 CLAIM) into user identity store:
+  const txUserIdentity = await userIdentity.connect(user)
+    .addKey(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [claimIssuer.address])), 3, 1);
+  await txUserIdentity.wait()
+
   // add user claim to user onchainid (connect should be possible with claimIssuer due to above addClaim option #1)
   const txAddClaim = await userIdentity.connect(claimIssuer)
     .addClaim(claimForUser.topic, claimForUser.scheme, claimForUser.issuer, claimForUser.signature, claimForUser.data, claimForUser.uri);
   await txAddClaim.wait()
 
   // option #2 for addClaim requires execute/approve pattern like this:
-  // const claimData = new ethers.Interface([
-  //   'function addClaim(uint256 topic, uint256 scheme, address issuer, bytes calldata signature, bytes calldata data, string calldata uri) external returns (bytes32 claimRequestId)'
-  // ]).encodeFunctionData('addClaim', [
-  //   claimForUser.topic, claimForUser.scheme, claimForUser.issuer, claimForUser.signature, claimForUser.data, claimForUser.uri,
+  // const claimData = new ethers.Interface(OnchainID.interfaces.IERC735.abi).encodeFunctionData('addClaim', [
+  //   claimForUser.topic, claimForUser.scheme, claimForUser.issuer, claimForUser.signature, claimForUser.data, claimForUser.uri
   // ])
 
   // // value always 0
