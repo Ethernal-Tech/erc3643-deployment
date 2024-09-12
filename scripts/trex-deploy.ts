@@ -100,7 +100,7 @@ async function main() {
     OnchainID.contracts.ClaimIssuer.bytecode,
     deployer).deploy(claimIssuer.address)
   await claimIssuerContract.waitForDeployment()
-  
+
   const txDeployTREX = await trexFactory.connect(deployer).deployTREXSuite(
     'salt',
     {
@@ -197,6 +197,9 @@ async function main() {
   // expect(txApprove).to.emit(userIdentity, 'Executed');
 
   // option #3, user calls his userIdentity contract .connect(user), he needs to get signed claim from claimIssuer first
+  // const txAddClaim = await userIdentity.connect(user)
+  //   .addClaim(claimForUser.topic, claimForUser.scheme, claimForUser.issuer, claimForUser.signature, claimForUser.data, claimForUser.uri);
+  // await txAddClaim.wait()
 }
 
 // We recommend this pattern to be able to use async/await everywhere
