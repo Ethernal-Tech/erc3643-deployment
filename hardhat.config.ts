@@ -5,7 +5,7 @@ const config: HardhatUserConfig = {
   networks: {
     geth: {
       url: "http://localhost:8545",
-    },
+    }
   }
 };
 
