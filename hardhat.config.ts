@@ -4,7 +4,7 @@ import "@nomicfoundation/hardhat-toolbox";
 const config: HardhatUserConfig = {
   networks: {
     geth: {
-      url: "http://localhost:8545",
+      url: "http://localhost:8545"
     }
   }
 };
