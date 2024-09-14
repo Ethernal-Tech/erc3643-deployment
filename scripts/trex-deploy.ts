@@ -141,7 +141,7 @@ async function main() {
 
   // after token deployment transfer ownership to gateway in order to allow identity creation to users
   // before another token is deployed transfer ownership to another token deployer with:
-  // const tx = await gateway.connect(deployer).transferFactoryOwnership(deployer.address)
+  // const tx = await gateway.connect(deployer).transferFactoryOwnership(newTokenDeployerAddress)
   // await tx.wait()
   const txTransferOwnership = await identityFactory.connect(deployer).transferOwnership(await gateway.getAddress())
   await txTransferOwnership.wait()
