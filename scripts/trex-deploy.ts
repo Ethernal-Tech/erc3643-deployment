@@ -110,7 +110,7 @@ async function main() {
   const txDeployTREX = await trexFactory.connect(deployer).deployTREXSuite(
     'tokensalt',
     {
-      owner: deployer.address,
+      owner: tokenAgent.address, // token owner can be any account (doesn't have to be deployer)
       name: 'Token name',
       symbol: 'SYM',
       decimals: 8,
