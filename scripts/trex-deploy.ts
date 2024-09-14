@@ -30,6 +30,12 @@ async function main() {
     OnchainID.contracts.Factory.bytecode,
     deployer).deploy(await identityImplementationAuthority.getAddress())
   await identityFactory.waitForDeployment()
+
+  const gateway = await new ethers.ContractFactory(
+    OnchainID.contracts.Gateway.abi,
+    OnchainID.contracts.Gateway.bytecode,
+    deployer).deploy(await identityFactory.getAddress(), [irAgent.address])
+  await gateway.waitForDeployment()
   // end of OnChainID deployment----------------------------------------------------
 
   const trustedIssuersRegistryImplementation = await new ethers.ContractFactory(
@@ -133,12 +139,19 @@ async function main() {
   expect(txDeployTREX).to.emit(identityFactory, 'Deployed')
   expect(txDeployTREX).to.emit(identityFactory, 'TokenLinked')
 
+  // after token deployment transfer ownership to gateway in order to allow identity creation to users
+  // before another token is deployed transfer ownership to another token deployer with:
+  // const tx = await gateway.connect(deployer).transferFactoryOwnership(deployer.address)
+  // await tx.wait()
+  const txTransferOwnership = await identityFactory.connect(deployer).transferOwnership(await gateway.getAddress())
+  await txTransferOwnership.wait()
+
   const trexSuiteDeployedEvent = receipt.logs.find((log: EventLog) => log.eventName === 'TREXSuiteDeployed')
-  const identityFactoryAddress = (await identityFactory.getAddress()).toString()
   console.log("Token address -> %s", trexSuiteDeployedEvent.args[0])
   console.log("IdentityRegistry address -> %s", trexSuiteDeployedEvent.args[1])
   console.log("IdentityRegistryStorage address -> %s", trexSuiteDeployedEvent.args[2])
-  console.log("IdentityFactory address -> %s", identityFactoryAddress)
+  console.log("IdentityFactory address -> %s", (await identityFactory.getAddress()).toString())
+  console.log("Gateway address -> %s", (await gateway.getAddress()).toString())
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -146,12 +159,11 @@ async function main() {
   // Below are usage examples, this doesn't belong to token deployment but needs to be done before token production
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // 1. user setup, user identity is created by deployer; only irAgent can add user into identityStorage
-  const idFactory = await ethers.getContractAt(OnchainID.contracts.Factory.abi, identityFactoryAddress)
-  const txIdFactory = await idFactory.connect(deployer).createIdentity(user.address, 'usersalt')
-  await txIdFactory.wait()
+  // 1. user setup, user identity is created by user; only irAgent can add user into identityStorage
+  const txDeployId = await gateway.connect(user).deployIdentityForWallet(user.address)
+  await txDeployId.wait()
 
-  const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(user.address))
+  const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await identityFactory.getIdentity(user.address))
 
   const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, trexSuiteDeployedEvent.args[1])
   const txIdRegistry = await idRegistry.connect(irAgent).registerIdentity(user.address, await userIdentity.getAddress(), 666)
