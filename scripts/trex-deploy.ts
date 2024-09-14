@@ -166,11 +166,11 @@ async function main() {
     identity: await userIdentity.getAddress(),
     signature: '',
     uri: 'https://example.com'
-  };
+  }
   claimForUser.signature = await claimIssuer.signMessage(
     ethers.getBytes(
       ethers.keccak256(
-        ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes'], [claimForUser.identity, claimForUser.topic, claimForUser.data]),
+        ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256', 'bytes'], [claimForUser.identity, claimForUser.topic, claimForUser.data])
       )
     )
   )
