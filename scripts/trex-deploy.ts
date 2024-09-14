@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import OnchainID from '@onchain-id/solidity';
 import { contracts } from '@tokenysolutions/t-rex';
 import { expect } from 'chai';
-import { EventLog, Contract } from 'ethers';
+import { EventLog } from 'ethers';
 
 async function main() {
   const provider = new ethers.JsonRpcProvider("http://localhost:8545")
@@ -12,6 +12,7 @@ async function main() {
   const tokenAgent = new ethers.Wallet("0e647288caf9b7d5c91f89e10ca6a9ef1cbe85e85a309e74e48149d0c2cf2291", provider)
   const user = new ethers.Wallet("b00ee7d037cd9ddd26866641bc2387059c0c8b2d86b7f1ef61d3a0956d21ab14", provider)
 
+  // OnChainID deployment, in the case of multiple tokens this is done only once!
   const identityImplementation = await new ethers.ContractFactory(
     OnchainID.contracts.Identity.abi,
     OnchainID.contracts.Identity.bytecode,
@@ -29,6 +30,7 @@ async function main() {
     OnchainID.contracts.Factory.bytecode,
     deployer).deploy(await identityImplementationAuthority.getAddress())
   await identityFactory.waitForDeployment()
+  // end of OnChainID deployment----------------------------------------------------
 
   const trustedIssuersRegistryImplementation = await new ethers.ContractFactory(
     contracts.TrustedIssuersRegistry.abi,
@@ -66,7 +68,7 @@ async function main() {
     major: 4,
     minor: 0,
     patch: 0
-  };
+  }
 
   const contractsStruct = {
     tokenImplementation: await tokenImplementation.getAddress(),
@@ -75,9 +77,10 @@ async function main() {
     irsImplementation: await identityRegistryStorageImplementation.getAddress(),
     tirImplementation: await trustedIssuersRegistryImplementation.getAddress(),
     mcImplementation: await modularComplianceImplementation.getAddress()
-  };
+  }
 
-  const trexImplementationAuthority = await new ethers.ContractFactory(contracts.TREXImplementationAuthority.abi,
+  const trexImplementationAuthority = await new ethers.ContractFactory(
+    contracts.TREXImplementationAuthority.abi,
     contracts.TREXImplementationAuthority.bytecode,
     deployer).deploy(true, ethers.ZeroAddress, ethers.ZeroAddress)
   await trexImplementationAuthority.waitForDeployment()
@@ -85,7 +88,8 @@ async function main() {
   const txAddTREX = await trexImplementationAuthority.connect(deployer).addAndUseTREXVersion(versionStruct, contractsStruct)
   await txAddTREX.wait()
   
-  const trexFactory = await new ethers.ContractFactory(contracts.TREXFactory.abi,
+  const trexFactory = await new ethers.ContractFactory(
+    contracts.TREXFactory.abi,
     contracts.TREXFactory.bytecode,
     deployer).deploy(await trexImplementationAuthority.getAddress(), await identityFactory.getAddress())
   await trexFactory.waitForDeployment()
@@ -93,7 +97,8 @@ async function main() {
   const txAddTokenFactory = await identityFactory.connect(deployer).addTokenFactory(await trexFactory.getAddress())
   await txAddTokenFactory.wait()
 
-  const claimIssuerContract = await new ethers.ContractFactory(OnchainID.contracts.ClaimIssuer.abi,
+  const claimIssuerContract = await new ethers.ContractFactory(
+    OnchainID.contracts.ClaimIssuer.abi,
     OnchainID.contracts.ClaimIssuer.bytecode,
     deployer).deploy(claimIssuer.address)
   await claimIssuerContract.waitForDeployment()
@@ -144,7 +149,7 @@ async function main() {
 
   const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(user.address))
 
-  const idRegistry = new Contract(trexSuiteDeployedEvent.args[1], contracts.IdentityRegistry.abi, irAgent)
+  const idRegistry = await ethers.getContractAt(contracts.IdentityRegistry.abi, trexSuiteDeployedEvent.args[1])
   const txIdRegistry = await idRegistry.connect(irAgent).registerIdentity(user.address, await userIdentity.getAddress(), 666)
   await txIdRegistry.wait()  
 
@@ -203,6 +208,6 @@ async function main() {
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
+  console.error(error)
+  process.exitCode = 1
 });
