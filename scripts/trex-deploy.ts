@@ -148,10 +148,9 @@ async function main() {
 
   const trexSuiteDeployedEvent = receipt.logs.find((log: EventLog) => log.eventName === 'TREXSuiteDeployed')
   console.log("Token address -> %s", trexSuiteDeployedEvent.args[0])
-  console.log("IdentityRegistry address -> %s", trexSuiteDeployedEvent.args[1])
-  console.log("IdentityRegistryStorage address -> %s", trexSuiteDeployedEvent.args[2])
-  console.log("IdentityFactory address -> %s", (await identityFactory.getAddress()).toString())
+  console.log("TREXFactory address -> %s", (await trexFactory.getAddress()).toString())
   console.log("Gateway address -> %s", (await gateway.getAddress()).toString())
+  console.log("IdentityRegistryStorage address -> %s", trexSuiteDeployedEvent.args[2])
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,9 +162,11 @@ async function main() {
   const txDeployId = await gateway.connect(user).deployIdentityForWallet(user.address)
   await txDeployId.wait()
 
-  const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await identityFactory.getIdentity(user.address))
+  const idFactory = await ethers.getContractAt(OnchainID.contracts.Factory.abi, await trexFactory.getIdFactory())
+  const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(user.address))
 
-  const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, trexSuiteDeployedEvent.args[1])
+  const token = await ethers.getContractAt(TRex.contracts.Token.abi, await trexFactory.getToken('tokensalt'))
+  const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, await token.identityRegistry())
   const txIdRegistry = await idRegistry.connect(irAgent).registerIdentity(user.address, await userIdentity.getAddress(), 666)
   await txIdRegistry.wait()  
 
