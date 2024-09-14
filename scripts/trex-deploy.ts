@@ -12,7 +12,7 @@ async function main() {
   const tokenAgent = new ethers.Wallet("0e647288caf9b7d5c91f89e10ca6a9ef1cbe85e85a309e74e48149d0c2cf2291", provider)
   const user = new ethers.Wallet("b00ee7d037cd9ddd26866641bc2387059c0c8b2d86b7f1ef61d3a0956d21ab14", provider)
 
-  // OnChainID deployment, in the case of multiple tokens this is done only once!
+  // OnChainID deployment
   const identityImplementation = await new ethers.ContractFactory(
     OnchainID.contracts.Identity.abi,
     OnchainID.contracts.Identity.bytecode,
@@ -36,7 +36,7 @@ async function main() {
     OnchainID.contracts.Gateway.bytecode,
     deployer).deploy(await identityFactory.getAddress(), [irAgent.address])
   await gateway.waitForDeployment()
-  // end of OnChainID deployment----------------------------------------------------
+  // end of OnChainID deployment
 
   const trustedIssuersRegistryImplementation = await new ethers.ContractFactory(
     TRex.contracts.TrustedIssuersRegistry.abi,
@@ -140,9 +140,6 @@ async function main() {
   expect(txDeployTREX).to.emit(identityFactory, 'TokenLinked')
 
   // after token deployment transfer ownership to gateway in order to allow identity creation to users
-  // before another token is deployed transfer ownership to another token deployer with:
-  // const tx = await gateway.connect(deployer).transferFactoryOwnership(newTokenDeployerAddress)
-  // await tx.wait()
   const txTransferOwnership = await identityFactory.connect(deployer).transferOwnership(await gateway.getAddress())
   await txTransferOwnership.wait()
 
