@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import OnchainID from '@onchain-id/solidity';
-import { contracts } from '@tokenysolutions/t-rex';
+import TRex from '@tokenysolutions/t-rex';
 import { expect } from 'chai';
 import { EventLog } from 'ethers';
 
@@ -33,34 +33,38 @@ async function main() {
   // end of OnChainID deployment----------------------------------------------------
 
   const trustedIssuersRegistryImplementation = await new ethers.ContractFactory(
-    contracts.TrustedIssuersRegistry.abi,
-    contracts.TrustedIssuersRegistry.bytecode,
+    TRex.contracts.TrustedIssuersRegistry.abi,
+    TRex.contracts.TrustedIssuersRegistry.bytecode,
     deployer).deploy()
   await trustedIssuersRegistryImplementation.waitForDeployment()
 
   const identityRegistryStorageImplementation = await new ethers.ContractFactory(
-    contracts.IdentityRegistryStorage.abi,
-    contracts.IdentityRegistryStorage.bytecode,
+    TRex.contracts.IdentityRegistryStorage.abi,
+    TRex.contracts.IdentityRegistryStorage.bytecode,
     deployer).deploy()
   await identityRegistryStorageImplementation.waitForDeployment()
 
-  const identityRegistryImplementation = await new ethers.ContractFactory(contracts.IdentityRegistry.abi,
-     contracts.IdentityRegistry.bytecode,
-     deployer).deploy()
+  const identityRegistryImplementation = await new ethers.ContractFactory(
+    TRex.contracts.IdentityRegistry.abi,
+    TRex.contracts.IdentityRegistry.bytecode,
+    deployer).deploy()
    await identityRegistryImplementation.waitForDeployment()
 
-  const modularComplianceImplementation = await new ethers.ContractFactory(contracts.ModularCompliance.abi,
-    contracts.ModularCompliance.bytecode,
+  const modularComplianceImplementation = await new ethers.ContractFactory(
+    TRex.contracts.ModularCompliance.abi,
+    TRex.contracts.ModularCompliance.bytecode,
     deployer).deploy()
   await modularComplianceImplementation.waitForDeployment()
 
-  const tokenImplementation = await new ethers.ContractFactory(contracts.Token.abi,
-    contracts.Token.bytecode,
+  const tokenImplementation = await new ethers.ContractFactory(
+    TRex.contracts.Token.abi,
+    TRex.contracts.Token.bytecode,
     deployer).deploy()
   await tokenImplementation.waitForDeployment()
 
-  const claimTopicsRegistryImplementation = await new ethers.ContractFactory(contracts.ClaimTopicsRegistry.abi,
-    contracts.ClaimTopicsRegistry.bytecode,
+  const claimTopicsRegistryImplementation = await new ethers.ContractFactory(
+    TRex.contracts.ClaimTopicsRegistry.abi,
+    TRex.contracts.ClaimTopicsRegistry.bytecode,
     deployer).deploy()
   await claimTopicsRegistryImplementation.waitForDeployment()
 
@@ -80,8 +84,8 @@ async function main() {
   }
 
   const trexImplementationAuthority = await new ethers.ContractFactory(
-    contracts.TREXImplementationAuthority.abi,
-    contracts.TREXImplementationAuthority.bytecode,
+    TRex.contracts.TREXImplementationAuthority.abi,
+    TRex.contracts.TREXImplementationAuthority.bytecode,
     deployer).deploy(true, ethers.ZeroAddress, ethers.ZeroAddress)
   await trexImplementationAuthority.waitForDeployment()
 
@@ -89,8 +93,8 @@ async function main() {
   await txAddTREX.wait()
   
   const trexFactory = await new ethers.ContractFactory(
-    contracts.TREXFactory.abi,
-    contracts.TREXFactory.bytecode,
+    TRex.contracts.TREXFactory.abi,
+    TRex.contracts.TREXFactory.bytecode,
     deployer).deploy(await trexImplementationAuthority.getAddress(), await identityFactory.getAddress())
   await trexFactory.waitForDeployment()
 
@@ -149,7 +153,7 @@ async function main() {
 
   const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(user.address))
 
-  const idRegistry = await ethers.getContractAt(contracts.IdentityRegistry.abi, trexSuiteDeployedEvent.args[1])
+  const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, trexSuiteDeployedEvent.args[1])
   const txIdRegistry = await idRegistry.connect(irAgent).registerIdentity(user.address, await userIdentity.getAddress(), 666)
   await txIdRegistry.wait()  
 
