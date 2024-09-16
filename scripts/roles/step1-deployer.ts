@@ -144,11 +144,11 @@ async function main() {
 
   const trexSuiteDeployedEvent = receipt.logs.find((log: EventLog) => log.eventName === 'TREXSuiteDeployed')
   console.log("Token address -> %s", trexSuiteDeployedEvent.args[0])
-  console.log("IdentityRegistryStorage address -> %s", trexSuiteDeployedEvent.args[2])
-  console.log("TrustedIssuersRegistry address -> %s", trexSuiteDeployedEvent.args[3])
-  console.log("ClaimTopicsRegistry address -> %s", trexSuiteDeployedEvent.args[4])
   console.log("TREXFactory address -> %s", (await trexFactory.getAddress()).toString())
   console.log("Gateway address -> %s", (await gateway.getAddress()).toString())
+
+  // Gateway is for users identity creation
+  // TREXFactory contains idFactory, token; token contains MC, IR; IR contains IRS, TIR, CTR
 }
 
 // We recommend this pattern to be able to use async/await everywhere

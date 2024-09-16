@@ -8,7 +8,7 @@ async function main() {
   const provider = new ethers.JsonRpcProvider("http://localhost:8545")
   const claimIssuer = new ethers.Wallet("7af6400ff7ddb5aae0ba6eaad5d415d9f8c6831d976c645d5bf6fecdb23ed2af", provider)
   const trexFactoryAddress = "0x0Ba997d8b14b2d2aC9BF96fa3D5F8c31927c9FdC"
-  const tirContractAddress = "0x67233aD9015bc941DaF35dF9236d21D386710c63"
+  
   const userAddress = "0x26F3f1f3F1d75c6d5d5146d1e44cec8831d0283A"
 
   // 3. method #1 add claim to user identity, method #3 generate claim and send it to user
@@ -22,7 +22,10 @@ async function main() {
 
   const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(userAddress))
 
-  const tirContract = await ethers.getContractAt(TRex.contracts.TrustedIssuersRegistry.abi, tirContractAddress)
+  const token = await ethers.getContractAt(TRex.contracts.Token.abi, await trexFactory.getToken('tokensalt'))
+  const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, await token.identityRegistry())
+  const tirContract = await ethers.getContractAt(TRex.contracts.TrustedIssuersRegistry.abi, await idRegistry.issuersRegistry())
+  
   const claimIssuerContracts = await tirContract.getTrustedIssuersForClaimTopic(ethers.id('CLAIM_TOPIC')) // this is array!
   const claimIssuerContract = await ethers.getContractAt(OnchainID.contracts.ClaimIssuer.abi, claimIssuerContracts[0])
   

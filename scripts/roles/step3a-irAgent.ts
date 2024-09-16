@@ -20,7 +20,7 @@ async function main() {
 
   const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, await token.identityRegistry())
   const txIdRegistry = await idRegistry.connect(irAgent).registerIdentity(userAddress, await userIdentity.getAddress(), 666)
-  await txIdRegistry.wait()  
+  await txIdRegistry.wait()
 
   expect(txIdRegistry).to.emit(idRegistry, 'IdentityRegistered')
 }
