@@ -19,7 +19,7 @@ async function main() {
   const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(userAddress))
 
   const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, await token.identityRegistry())
-  const txIdRegistry = await idRegistry.connect(irAgent).registerIdentity(userAddress, await userIdentity.getAddress(), 381)
+  const txIdRegistry = await idRegistry.connect(irAgent).registerIdentity(userAddress, await userIdentity.getAddress(), 688) // SRB Iban code
   await txIdRegistry.wait()
 
   expect(txIdRegistry).to.emit(idRegistry, 'IdentityRegistered')
