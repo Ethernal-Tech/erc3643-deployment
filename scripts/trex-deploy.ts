@@ -119,7 +119,7 @@ async function main() {
       owner: tokenAgent.address, // token owner/admin can be any account (doesn't have to be deployer)
       name: 'Token name',
       symbol: 'SYM',
-      decimals: 8,
+      decimals: 18,
       irs: ethers.ZeroAddress, // if irs address is passed then all users from that irs will be reused (multiple tokens case)
       ONCHAINID: ethers.ZeroAddress,
       irAgents: [irAgent.address],

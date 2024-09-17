@@ -12,7 +12,7 @@ async function main() {
   const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, trexFactoryAddress, tokenAgent)
   const token = await ethers.getContractAt(TRex.contracts.Token.abi, await trexFactory.getToken('tokensalt'), tokenAgent)
 
-  const txMint = await token.connect(tokenAgent).mint(userAddress, 1000);
+  const txMint = await token.connect(tokenAgent).mint(userAddress, ethers.WeiPerEther * BigInt(1000)); // 1000 ether
   await txMint.wait()
   expect(txMint).to.emit(token, 'Transfer')
 
