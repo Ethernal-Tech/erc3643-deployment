@@ -39,7 +39,7 @@ async function main() {
       complianceModules: [await countryAllowModule.getAddress()],
       complianceSettings: [
         new ethers.Interface(['function batchAllowCountries(uint16[])']).encodeFunctionData('batchAllowCountries', [
-          [666],
+          [688],
         ])
       ]
     },
