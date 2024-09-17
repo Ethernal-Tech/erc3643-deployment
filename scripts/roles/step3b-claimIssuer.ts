@@ -7,7 +7,7 @@ import { EventLog } from 'ethers';
 async function main() {
   const provider = new ethers.JsonRpcProvider("http://localhost:8545")
   const claimIssuer = new ethers.Wallet("7af6400ff7ddb5aae0ba6eaad5d415d9f8c6831d976c645d5bf6fecdb23ed2af", provider)
-  const trexGatewayAddress = "0x19364c95F9Cb6506Dc39c1Ecdc48000b4153b8cC"
+  const trexFactoryAddress = "0x19364c95F9Cb6506Dc39c1Ecdc48000b4153b8cC"
   
   const userAddress = "0x26F3f1f3F1d75c6d5d5146d1e44cec8831d0283A"
 
@@ -17,8 +17,7 @@ async function main() {
   // SELECT METHOD FOR CLAIM ISSUING------------------------------------------------------------
   const claimIssuingMethod = 1
 
-  const trexGateway = await ethers.getContractAt(TRex.contracts.TREXGateway.abi, trexGatewayAddress, claimIssuer)
-  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, await trexGateway.getFactory(), claimIssuer)
+  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, trexFactoryAddress, claimIssuer)
   const idFactory = await ethers.getContractAt(OnchainID.contracts.Factory.abi, await trexFactory.getIdFactory(), claimIssuer)
 
   const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(userAddress), claimIssuer)

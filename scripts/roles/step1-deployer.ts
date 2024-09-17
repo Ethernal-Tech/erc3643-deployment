@@ -106,12 +106,6 @@ async function main() {
   const txAddTokenFactory = await identityFactory.connect(deployer).addTokenFactory(await trexFactory.getAddress())
   await txAddTokenFactory.wait()
 
-  const trexGateway = await new ethers.ContractFactory(
-    TRex.contracts.TREXGateway.abi,
-    TRex.contracts.TREXGateway.bytecode,
-    deployer).deploy(await trexFactory.getAddress(), true)
-  await trexGateway.waitForDeployment()
-
   const claimIssuerContract = await new ethers.ContractFactory(
     OnchainID.contracts.ClaimIssuer.abi,
     OnchainID.contracts.ClaimIssuer.bytecode,
@@ -144,16 +138,13 @@ async function main() {
   expect(txDeployTREX).to.emit(identityFactory, 'Deployed')
   expect(txDeployTREX).to.emit(identityFactory, 'TokenLinked')
 
-  // after token deployment transfer ownership to gateway in order to allow identity creation and trexfactory reuse
-  const trexGatewayOwnership = await trexFactory.connect(deployer).transferOwnership(await trexGateway.getAddress())
-  await trexGatewayOwnership.wait()
-
-  const txOnchainOwnership = await identityFactory.connect(deployer).transferOwnership(await gateway.getAddress())
-  await txOnchainOwnership.wait()
+  // after token deployment transfer ownership to gateway in order to allow identity creation by users
+  const txTransferOwnership = await identityFactory.connect(deployer).transferOwnership(await gateway.getAddress())
+  await txTransferOwnership.wait()
 
   const trexSuiteDeployedEvent = receipt.logs.find((log: EventLog) => log.eventName === 'TREXSuiteDeployed')
   console.log("Token address -> %s", trexSuiteDeployedEvent.args[0])
-  console.log("TREXGateway address -> %s", (await trexGateway.getAddress()).toString())
+  console.log("TREXFactory address -> %s", (await trexFactory.getAddress()).toString())
   console.log("Gateway address -> %s", (await gateway.getAddress()).toString())
 
   // Gateway is for users identity creation

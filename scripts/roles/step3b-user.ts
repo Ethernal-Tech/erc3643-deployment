@@ -6,7 +6,7 @@ import { expect } from 'chai';
 async function main() {
   const provider = new ethers.JsonRpcProvider("http://localhost:8545")
   const user = new ethers.Wallet("b00ee7d037cd9ddd26866641bc2387059c0c8b2d86b7f1ef61d3a0956d21ab14", provider)
-  const trexGatewayAddress = "0x19364c95F9Cb6506Dc39c1Ecdc48000b4153b8cC"
+  const trexFactoryAddress = "0x19364c95F9Cb6506Dc39c1Ecdc48000b4153b8cC"
   const claimIssuerAddress = "0xeD18483A0c15f44bb788Bce52F3A3ac3808AFE20" // required for method #1
 
   const executionNonce = 0 // required for method #2, user has to get this from claim issuer
@@ -27,8 +27,7 @@ async function main() {
   // SELECT METHOD FOR CLAIM ISSUING------------------------------------------------------------
   const claimIssuingMethod = 1
 
-  const trexGateway = await ethers.getContractAt(TRex.contracts.TREXGateway.abi, trexGatewayAddress, user)
-  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, await trexGateway.getFactory(), user)
+  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, trexFactoryAddress, user)
   const idFactory = await ethers.getContractAt(OnchainID.contracts.Factory.abi, await trexFactory.getIdFactory(), user)
 
   const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(user.address), user)
