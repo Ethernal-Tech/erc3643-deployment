@@ -6,11 +6,10 @@ async function main() {
   const provider = new ethers.JsonRpcProvider("http://localhost:8545")
   const tokenAgent = new ethers.Wallet("0e647288caf9b7d5c91f89e10ca6a9ef1cbe85e85a309e74e48149d0c2cf2291", provider)
   const userAddress = "0x26F3f1f3F1d75c6d5d5146d1e44cec8831d0283A"
-  const trexFactoryAddress = "0x19364c95F9Cb6506Dc39c1Ecdc48000b4153b8cC"
+  const tokenAddress = "0xcE79AfF53Fd87b8baEbF1b0aB4189EF9BD332C8E"
 
   // 4. mint and unpause; unpause is mandatory before token transactions!; only tokenAgent can do mint and unpause
-  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, trexFactoryAddress, tokenAgent)
-  const token = await ethers.getContractAt(TRex.contracts.Token.abi, await trexFactory.getToken('tokensalt'), tokenAgent)
+  const token = await ethers.getContractAt(TRex.contracts.Token.abi, tokenAddress, tokenAgent)
 
   const txMint = await token.connect(tokenAgent).mint(userAddress, ethers.WeiPerEther * BigInt(1000)); // 1000 ether
   await txMint.wait()

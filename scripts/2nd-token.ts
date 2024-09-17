@@ -1,14 +1,18 @@
 import { ethers } from "hardhat";
+import OnchainID from '@onchain-id/solidity';
 import TRex from '@tokenysolutions/t-rex';
 import { expect } from 'chai';
-import { EventLog } from 'ethers';
 
 async function main() {
   const provider = new ethers.JsonRpcProvider("http://localhost:8545")
   const deployer = new ethers.Wallet("e77f21c7c2cc438846dcfdd269c68daea4c1c7f40d2c3329ea55c01e24f77bcc", provider)
-  const trexFactoryAddress = "0x23536ED928Aaab4B505b16C14e1b7bD8e46eD8cb"
+  // contracts
+  const trexGatewayAddress = "0x36E628aa89855497159715F94BbD59D383d9D26c"
+  const firstTokenAddress = "0xe96D6053326E91e4dB1c370E13DfB722a11f8E78"
+  // agents & owner
   const irAgentAddress = "0x85b41C1dfd4b79385C6cEa3450192dF4B4dD14d0"
   const tokenAgentAddress = "0xa5E7b2A02355Df8E2a43267136d7c9B085118c52"
+  const owner = irAgentAddress
 
   const countryAllowModule = await new ethers.ContractFactory(
     TRex.contracts.CountryAllowModule.abi,
@@ -17,18 +21,25 @@ async function main() {
   ).deploy()
   await countryAllowModule.waitForDeployment()
 
-  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, trexFactoryAddress, deployer)
+  const trexGateway = await ethers.getContractAt(TRex.contracts.TREXGateway.abi, trexGatewayAddress, deployer)
+  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, await trexGateway.getFactory(), deployer)
+  const identityFactory = await ethers.getContractAt(OnchainID.contracts.Factory.abi, await trexFactory.getIdFactory(), deployer)
 
-  const token = await ethers.getContractAt(TRex.contracts.Token.abi, await trexFactory.getToken('tokensalt'), deployer)
+  // reuse claims & irs from the 1st token
+  const token = await ethers.getContractAt(TRex.contracts.Token.abi, firstTokenAddress, deployer)
   const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, await token.identityRegistry(), deployer)
   const tirContract = await ethers.getContractAt(TRex.contracts.TrustedIssuersRegistry.abi, await idRegistry.issuersRegistry(), deployer)
   
   const claimIssuerContracts = await tirContract.getTrustedIssuersForClaimTopic(ethers.id('CLAIM_TOPIC')) // this is array!
 
-  const txDeployTREX = await trexFactory.connect(deployer).deployTREXSuite(
-    'tokensalt2',
+  trexFactory.on('TREXSuiteDeployed', (token, p1, p2, p3, p4, p5, p6, event) => {
+    console.log("Token address -> %s", token)
+    trexFactory.off('TREXSuiteDeployed')
+  })
+
+  const txDeployTREX = await trexGateway.connect(deployer).deployTREXSuite(
     {
-      owner: tokenAgentAddress, // token owner/admin can be any account (doesn't have to be deployer)
+      owner: owner, // token owner/admin can be any account (doesn't have to be deployer)
       name: 'Token Name',
       symbol: 'ETHRS',
       decimals: 18,
@@ -49,10 +60,12 @@ async function main() {
       issuerClaims: [[ethers.id('CLAIM_TOPIC')]]
     }
   )
-  const receipt = await txDeployTREX.wait()
+  await txDeployTREX.wait()
+
+  expect(txDeployTREX).to.emit(trexGateway, 'GatewaySuiteDeploymentProcessed')
   expect(txDeployTREX).to.emit(trexFactory, 'TREXSuiteDeployed')
-  const trexSuiteDeployedEvent = receipt.logs.find((log: EventLog) => log.eventName === 'TREXSuiteDeployed')
-  console.log("Token address -> %s", trexSuiteDeployedEvent.args[0])
+  expect(txDeployTREX).to.emit(identityFactory, 'Deployed')
+  expect(txDeployTREX).to.emit(identityFactory, 'TokenLinked')
 }
 
 // We recommend this pattern to be able to use async/await everywhere
