@@ -6,7 +6,7 @@ import { EventLog } from 'ethers';
 async function main() {
   const provider = new ethers.JsonRpcProvider("http://localhost:8545")
   const deployer = new ethers.Wallet("e77f21c7c2cc438846dcfdd269c68daea4c1c7f40d2c3329ea55c01e24f77bcc", provider)
-  const trexFactoryAddress = "0x0Ba997d8b14b2d2aC9BF96fa3D5F8c31927c9FdC"
+  const trexFactoryAddress = "0x23536ED928Aaab4B505b16C14e1b7bD8e46eD8cb"
   const irAgentAddress = "0x85b41C1dfd4b79385C6cEa3450192dF4B4dD14d0"
   const tokenAgentAddress = "0xa5E7b2A02355Df8E2a43267136d7c9B085118c52"
 
@@ -17,11 +17,11 @@ async function main() {
   ).deploy()
   await countryAllowModule.waitForDeployment()
 
-  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, trexFactoryAddress)
+  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, trexFactoryAddress, deployer)
 
-  const token = await ethers.getContractAt(TRex.contracts.Token.abi, await trexFactory.getToken('tokensalt'))
-  const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, await token.identityRegistry())
-  const tirContract = await ethers.getContractAt(TRex.contracts.TrustedIssuersRegistry.abi, await idRegistry.issuersRegistry())
+  const token = await ethers.getContractAt(TRex.contracts.Token.abi, await trexFactory.getToken('tokensalt'), deployer)
+  const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, await token.identityRegistry(), deployer)
+  const tirContract = await ethers.getContractAt(TRex.contracts.TrustedIssuersRegistry.abi, await idRegistry.issuersRegistry(), deployer)
   
   const claimIssuerContracts = await tirContract.getTrustedIssuersForClaimTopic(ethers.id('CLAIM_TOPIC')) // this is array!
 
