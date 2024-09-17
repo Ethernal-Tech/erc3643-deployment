@@ -7,7 +7,7 @@ import { EventLog } from 'ethers';
 async function main() {
   const provider = new ethers.JsonRpcProvider("http://localhost:8545")
   const claimIssuer = new ethers.Wallet("7af6400ff7ddb5aae0ba6eaad5d415d9f8c6831d976c645d5bf6fecdb23ed2af", provider)
-  const trexFactoryAddress = "0x0Ba997d8b14b2d2aC9BF96fa3D5F8c31927c9FdC"
+  const trexGatewayAddress = "0x19364c95F9Cb6506Dc39c1Ecdc48000b4153b8cC"
   
   const userAddress = "0x26F3f1f3F1d75c6d5d5146d1e44cec8831d0283A"
 
@@ -17,17 +17,18 @@ async function main() {
   // SELECT METHOD FOR CLAIM ISSUING------------------------------------------------------------
   const claimIssuingMethod = 1
 
-  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, trexFactoryAddress)
-  const idFactory = await ethers.getContractAt(OnchainID.contracts.Factory.abi, await trexFactory.getIdFactory())
+  const trexGateway = await ethers.getContractAt(TRex.contracts.TREXGateway.abi, trexGatewayAddress, claimIssuer)
+  const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, await trexGateway.getFactory(), claimIssuer)
+  const idFactory = await ethers.getContractAt(OnchainID.contracts.Factory.abi, await trexFactory.getIdFactory(), claimIssuer)
 
-  const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(userAddress))
+  const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await idFactory.getIdentity(userAddress), claimIssuer)
 
-  const token = await ethers.getContractAt(TRex.contracts.Token.abi, await trexFactory.getToken('tokensalt'))
-  const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, await token.identityRegistry())
-  const tirContract = await ethers.getContractAt(TRex.contracts.TrustedIssuersRegistry.abi, await idRegistry.issuersRegistry())
+  const token = await ethers.getContractAt(TRex.contracts.Token.abi, await trexFactory.getToken('tokensalt'), claimIssuer)
+  const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, await token.identityRegistry(), claimIssuer)
+  const tirContract = await ethers.getContractAt(TRex.contracts.TrustedIssuersRegistry.abi, await idRegistry.issuersRegistry(), claimIssuer)
   
   const claimIssuerContracts = await tirContract.getTrustedIssuersForClaimTopic(ethers.id('CLAIM_TOPIC')) // this is array!
-  const claimIssuerContract = await ethers.getContractAt(OnchainID.contracts.ClaimIssuer.abi, claimIssuerContracts[0])
+  const claimIssuerContract = await ethers.getContractAt(OnchainID.contracts.ClaimIssuer.abi, claimIssuerContracts[0], claimIssuer)
   
   const claimForUser = {
     identity: await userIdentity.getAddress(),

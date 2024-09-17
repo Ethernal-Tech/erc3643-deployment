@@ -4,7 +4,7 @@ import OnchainID from '@onchain-id/solidity';
 async function main() {
   const provider = new ethers.JsonRpcProvider("http://localhost:8545")
   const user = new ethers.Wallet("b00ee7d037cd9ddd26866641bc2387059c0c8b2d86b7f1ef61d3a0956d21ab14", provider)
-  const gatewayAddress = "0xb81a64B1A19f6BE0dAeD369c8E43eD0fD31FB8dB"
+  const gatewayAddress = "0xBe9E854EdA0d7f3295a33a9dAd4EEa50C2bfd091"
 
   // 2. user setup, user identity can be created by anyone
   const gateway = await ethers.getContractAt(OnchainID.contracts.Gateway.abi, gatewayAddress)
