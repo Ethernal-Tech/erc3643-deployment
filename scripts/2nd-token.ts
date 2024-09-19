@@ -32,16 +32,11 @@ async function main() {
   
   const claimIssuerContracts = await tirContract.getTrustedIssuersForClaimTopic(ethers.id('CLAIM_TOPIC')) // this is array!
 
-  trexFactory.on('TREXSuiteDeployed', (token, p1, p2, p3, p4, p5, p6, event) => {
-    console.log("Token address -> %s", token)
-    trexFactory.off('TREXSuiteDeployed')
-  })
-
   const txDeployTREX = await trexGateway.connect(deployer).deployTREXSuite(
     {
       owner: owner, // token owner/admin can be any account (doesn't have to be deployer)
-      name: 'Token Name',
-      symbol: 'ETHRS',
+      name: 'Token Name9',
+      symbol: 'ETHRS78',
       decimals: 18,
       irs: await idRegistry.identityStorage(), // if irs address is passed then all users from that irs will be reused (multiple tokens case)
       ONCHAINID: ethers.ZeroAddress,
@@ -61,6 +56,11 @@ async function main() {
     }
   )
   await txDeployTREX.wait()
+
+  const trexSuiteDeployed = await trexFactory.queryFilter(trexFactory.filters.TREXSuiteDeployed(), "latest", "latest")
+  expect(trexSuiteDeployed).to.have.lengthOf(1)
+  
+  console.log("Token address -> %s", (trexSuiteDeployed[0]).args[0])
 
   expect(txDeployTREX).to.emit(trexGateway, 'GatewaySuiteDeploymentProcessed')
   expect(txDeployTREX).to.emit(trexFactory, 'TREXSuiteDeployed')

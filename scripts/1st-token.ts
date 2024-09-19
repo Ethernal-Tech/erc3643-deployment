@@ -24,11 +24,6 @@ async function main() {
   const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, await trexGateway.getFactory(), deployer)
   const identityFactory = await ethers.getContractAt(OnchainID.contracts.Factory.abi, await trexFactory.getIdFactory(), deployer)
 
-  trexFactory.on('TREXSuiteDeployed', (token, p1, p2, p3, p4, p5, p6, event) => {
-    console.log("Token address -> %s", token)
-    trexFactory.off('TREXSuiteDeployed')
-  })
-
   // deployer must be someone added as a deployer in trexGateway
   const txDeployTREX = await trexGateway.connect(deployer).deployTREXSuite(
     {
@@ -50,6 +45,11 @@ async function main() {
     }
   ); 
   await txDeployTREX.wait()
+
+  const trexSuiteDeployed = await trexFactory.queryFilter(trexFactory.filters.TREXSuiteDeployed(), "latest", "latest")
+  expect(trexSuiteDeployed).to.have.lengthOf(1)
+  
+  console.log("Token address -> %s", (trexSuiteDeployed[0]).args[0])
 
   expect(txDeployTREX).to.emit(trexGateway, 'GatewaySuiteDeploymentProcessed')
   expect(txDeployTREX).to.emit(trexFactory, 'TREXSuiteDeployed')
