@@ -105,7 +105,7 @@ async function main() {
   const trexGateway = await new ethers.ContractFactory(
     TRex.contracts.TREXGateway.abi,
     TRex.contracts.TREXGateway.bytecode,
-    deployer).deploy(await trexFactory.getAddress(), true)
+    deployer).deploy(await trexFactory.getAddress(), false)
   await trexGateway.waitForDeployment()
 
   const txAddDeployer  = await trexGateway.connect(deployer).addDeployer(deployer.address) // token deployer can be anyone
