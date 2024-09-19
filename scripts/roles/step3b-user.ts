@@ -34,6 +34,7 @@ async function main() {
   const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await identityFactory.getIdentity(user.address), user)
 
   if (claimIssuingMethod == 1) {
+    // Direct Onchain Approach:
     // method #1 for addClaim, add claim issuer signing key (type = 3 CLAIM) into user identity store
     // this must be done before claim issuing
     const txAddClaimIssuer = await userIdentity.connect(user)
@@ -52,6 +53,7 @@ async function main() {
     expect(txApprove).to.emit(userIdentity, 'Executed')
   }
   else if (claimIssuingMethod == 3) {
+    // Indirect Hybrid Approach:
     // method #3, user calls his userIdentity contract, he needs to get signed claim from claimIssuer first
     const txAddClaim = await userIdentity.connect(user)
       .addClaim(claimForUser.topic, claimForUser.scheme, claimForUser.issuer, claimForUser.signature, claimForUser.data, claimForUser.uri)

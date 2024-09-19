@@ -14,6 +14,12 @@ async function main() {
 
   // 3. insert user into identity registry storage; only irAgent can add user into identityStorage
   // this step can be executed in parallel with claim issuing
+  // AS AN OPTION BEFORE ADDING USER IDENTITY TO IRS IT CAN BE CHECKED WITH OnchainID Verifier CONTRACT IF THE
+  // USER HAS ALL CLAIMS REQUIRED FOR THIS PARTICULAR TOKEN.IF SO THEN CLAIMS MUST BE ADDED BEFORE THIS ACTION.
+  // HOWEVER IF CLAIMS WILL BE PERIODICALLY RENEWED THEN THIS CHECK DOESN'T HAVE MUCH SENSE.
+  // await verifier.addClaimTopic(ethers.id('CLAIM_TOPIC'));
+  // await verifier.addTrustedIssuer(await claimIssuerContract.getAddress(), [ethers.id('CLAIM_TOPIC')]);
+  // await verifier.verify(userAddress)
 
   const trexGateway = await ethers.getContractAt(TRex.contracts.TREXGateway.abi, trexGatewayAddress, irAgent)
   const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, await trexGateway.getFactory(), irAgent)

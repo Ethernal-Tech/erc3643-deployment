@@ -49,6 +49,7 @@ async function main() {
   )
 
   if (claimIssuingMethod == 1) {
+    // Direct Onchain Approach:
     // method #1 for addClaim, add claim issuer signing key (type = 3 CLAIM) into user identity store
     // this is possible only if user allows this to claim issuer first
     const txAddClaim = await userIdentity.connect(claimIssuer)
@@ -74,6 +75,7 @@ async function main() {
     console.log(executionNonce)
   }
   else if (claimIssuingMethod == 3) {
+    // Indirect Hybrid Approach:
     // method #3, user calls his userIdentity contract, he needs to get signed claim from claimIssuer first
     // send this data to user
     console.log("topic -> %s", claimForUser.topic)
