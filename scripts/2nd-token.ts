@@ -35,8 +35,8 @@ async function main() {
   const txDeployTREX = await trexGateway.connect(deployer).deployTREXSuite(
     {
       owner: owner, // token owner/admin can be any account (doesn't have to be deployer)
-      name: 'Token Name9',
-      symbol: 'ETHRS78',
+      name: 'Token Name',
+      symbol: 'ETHRS',
       decimals: 18,
       irs: await idRegistry.identityStorage(), // if irs address is passed then all users from that irs will be reused (multiple tokens case)
       ONCHAINID: ethers.ZeroAddress,
