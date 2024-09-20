@@ -7,5 +7,5 @@ Try running some of the following tasks in order to execute the script. Make sur
 ```shell
 npm install --save-dev hardhat (to install hardhat)
 npm ci
-npx hardhat run scripts/trex-deploy.ts --network geth
+npx hardhat run scripts/trex-deploy.ts  // --network geth -> this is not needed since provider is defined within scripts
 ```
