@@ -4,8 +4,7 @@ import TRex from '@tokenysolutions/t-rex';
 import { expect } from 'chai';
 
 async function main() {
-  const provider = new ethers.JsonRpcProvider("http://localhost:8545")
-  const user = new ethers.Wallet("b00ee7d037cd9ddd26866641bc2387059c0c8b2d86b7f1ef61d3a0956d21ab14", provider)
+  const user = (await ethers.getSigners())[4]
   const trexGatewayAddress = "0x36E628aa89855497159715F94BbD59D383d9D26c"
   const claimIssuerAddress = "0xeD18483A0c15f44bb788Bce52F3A3ac3808AFE20" // required for method #1
 

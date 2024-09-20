@@ -3,8 +3,7 @@ import TRex from '@tokenysolutions/t-rex';
 import { expect } from 'chai';
 
 async function main() {
-  const provider = new ethers.JsonRpcProvider("http://localhost:8545")
-  const tokenAgent = new ethers.Wallet("0e647288caf9b7d5c91f89e10ca6a9ef1cbe85e85a309e74e48149d0c2cf2291", provider)
+  const tokenAgent = (await ethers.getSigners())[3]
   const userAddress = "0x26F3f1f3F1d75c6d5d5146d1e44cec8831d0283A"
   const tokenAddress = "0xcE79AfF53Fd87b8baEbF1b0aB4189EF9BD332C8E"
 

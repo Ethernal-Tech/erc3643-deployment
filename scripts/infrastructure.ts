@@ -3,8 +3,7 @@ import OnchainID from '@onchain-id/solidity';
 import TRex from '@tokenysolutions/t-rex';
 
 async function main() {
-  const provider = new ethers.JsonRpcProvider("http://localhost:8545")
-  const deployer = new ethers.Wallet("e77f21c7c2cc438846dcfdd269c68daea4c1c7f40d2c3329ea55c01e24f77bcc", provider)
+  const [deployer] = await ethers.getSigners()
   const irAgentAddress = "0x85b41C1dfd4b79385C6cEa3450192dF4B4dD14d0"
 
   // OnChainID deployment

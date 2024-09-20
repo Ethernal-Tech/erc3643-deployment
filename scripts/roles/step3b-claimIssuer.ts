@@ -5,8 +5,7 @@ import { expect } from 'chai';
 import { EventLog } from 'ethers';
 
 async function main() {
-  const provider = new ethers.JsonRpcProvider("http://localhost:8545")
-  const claimIssuer = new ethers.Wallet("7af6400ff7ddb5aae0ba6eaad5d415d9f8c6831d976c645d5bf6fecdb23ed2af", provider)
+  const claimIssuer = (await ethers.getSigners())[1]
   const trexGatewayAddress = "0x36E628aa89855497159715F94BbD59D383d9D26c"
   const tokenAddress = "0xe96D6053326E91e4dB1c370E13DfB722a11f8E78"
   

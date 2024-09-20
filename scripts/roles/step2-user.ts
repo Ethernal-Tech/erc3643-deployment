@@ -2,8 +2,7 @@ import { ethers } from "hardhat";
 import OnchainID from '@onchain-id/solidity';
 
 async function main() {
-  const provider = new ethers.JsonRpcProvider("http://localhost:8545")
-  const user = new ethers.Wallet("b00ee7d037cd9ddd26866641bc2387059c0c8b2d86b7f1ef61d3a0956d21ab14", provider)
+  const user = (await ethers.getSigners())[4]
   const gatewayAddress = "0x9Fa5655b812E3e0cdaB3CFAd0155a938C4136Aff"
 
   // 2. user setup, user identity can be created by anyone
