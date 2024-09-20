@@ -44,11 +44,13 @@ async function main() {
       issuerClaims: [[ethers.id('CLAIM_TOPIC')]]
     }
   ); 
-  await txDeployTREX.wait()
+  const receipt = await txDeployTREX.wait()
 
-  const trexSuiteDeployed = await trexFactory.queryFilter(trexFactory.filters.TREXSuiteDeployed(), "latest", "latest")
+  const trexSuiteDeployed = await trexFactory.queryFilter(
+    trexFactory.filters.TREXSuiteDeployed(), receipt.blockNumber, receipt.blockNumber
+  )
   expect(trexSuiteDeployed).to.have.lengthOf(1)
-  
+
   console.log("Token address -> %s", (trexSuiteDeployed[0]).args[0])
 
   expect(txDeployTREX).to.emit(trexGateway, 'GatewaySuiteDeploymentProcessed')
