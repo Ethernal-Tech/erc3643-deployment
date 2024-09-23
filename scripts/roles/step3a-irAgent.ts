@@ -10,21 +10,22 @@ async function main() {
   // contracts
   const trexGatewayAddress = "0x36E628aa89855497159715F94BbD59D383d9D26c"
   const tokenAddress = "0xcE79AfF53Fd87b8baEbF1b0aB4189EF9BD332C8E"
+  const verifierAddress = "0xC1A0d413A94E80fcd429B2421D2A2820cb061244"
 
   // 3. insert user into identity registry storage; only irAgent can add user into identityStorage
   // this step can be executed in parallel with claim issuing
-  // AS AN OPTION BEFORE ADDING USER IDENTITY TO IRS IT CAN BE CHECKED WITH OnchainID Verifier CONTRACT IF THE
-  // USER HAS ALL CLAIMS REQUIRED FOR THIS PARTICULAR TOKEN.IF SO THEN CLAIMS MUST BE ADDED BEFORE THIS ACTION.
-  // HOWEVER IF CLAIMS WILL BE PERIODICALLY RENEWED THEN THIS CHECK DOESN'T HAVE MUCH SENSE.
-  // await verifier.addClaimTopic(ethers.id('CLAIM_TOPIC'));
-  // await verifier.addTrustedIssuer(await claimIssuerContract.getAddress(), [ethers.id('CLAIM_TOPIC')]);
-  // await verifier.verify(userAddress)
-
   const trexGateway = await ethers.getContractAt(TRex.contracts.TREXGateway.abi, trexGatewayAddress, irAgent)
   const trexFactory = await ethers.getContractAt(TRex.contracts.TREXFactory.abi, await trexGateway.getFactory(), irAgent)
   const identityFactory = await ethers.getContractAt(OnchainID.contracts.Factory.abi, await trexFactory.getIdFactory(), irAgent)
 
   const userIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi, await identityFactory.getIdentity(userAddress), irAgent)
+
+  // AS AN OPTION BEFORE ADDING USER IDENTITY TO IRS IT CAN BE CHECKED WITH OnchainID Verifier CONTRACT IF THE
+  // USER HAS ALL CLAIMS REQUIRED FOR THIS PARTICULAR TOKEN.IF SO THEN CLAIMS MUST BE ADDED BEFORE THIS ACTION.
+  // HOWEVER IF CLAIMS WILL BE PERIODICALLY RENEWED THEN THIS CHECK DOESN'T HAVE MUCH SENSE.
+  
+  // const verifier = await ethers.getContractAt(OnchainID.contracts.Verifier.abi, verifierAddress, irAgent)
+  // await expect(verifier.verify(await userIdentity.getAddress())).to.eventually.be.true;
 
   const token = await ethers.getContractAt(TRex.contracts.Token.abi, tokenAddress, irAgent)
   const idRegistry = await ethers.getContractAt(TRex.contracts.IdentityRegistry.abi, await token.identityRegistry(), irAgent)

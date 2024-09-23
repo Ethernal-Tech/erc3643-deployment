@@ -34,7 +34,7 @@ async function main() {
   const txDeployTREX = await trexGateway.connect(deployer).deployTREXSuite(
     {
       owner: owner, // token owner/admin can be any account (doesn't have to be deployer)
-      name: 'Token Name',
+      name: 'Token Name98',
       symbol: 'ETHRS',
       decimals: 18,
       irs: await idRegistry.identityStorage(), // if irs address is passed then all users from that irs will be reused (multiple tokens case)
@@ -67,6 +67,24 @@ async function main() {
   expect(txDeployTREX).to.emit(trexFactory, 'TREXSuiteDeployed')
   expect(txDeployTREX).to.emit(identityFactory, 'Deployed')
   expect(txDeployTREX).to.emit(identityFactory, 'TokenLinked')
+
+  // OPTIONALLY DEPLOY VERIFIER CONTRACT
+  const verifier = await new ethers.ContractFactory(
+    OnchainID.contracts.Verifier.abi,
+    OnchainID.contracts.Verifier.bytecode,
+    deployer).deploy()
+  await verifier.waitForDeployment()
+
+  const txClaimTopic = await verifier.connect(deployer).addClaimTopic(ethers.id('CLAIM_TOPIC'));
+  await txClaimTopic.wait()
+
+  const txTrustedIssuer = await verifier.connect(deployer).addTrustedIssuer(claimIssuerContracts[0], [ethers.id('CLAIM_TOPIC')]);
+  await txTrustedIssuer.wait()
+
+  const txOwnership = await verifier.connect(deployer).transferOwnership(owner)
+  await txOwnership.wait()
+
+  console.log("Verifier address -> %s", await verifier.getAddress())
 }
 
 // We recommend this pattern to be able to use async/await everywhere
