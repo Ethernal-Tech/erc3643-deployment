@@ -1,4 +1,5 @@
 import { ethers } from "hardhat";
+import { expect } from "chai";
 import OnchainID from "@onchain-id/solidity";
 import addresses from "../../addresses-fluxion.json";
 import TRex from "@tokenysolutions/t-rex";
@@ -58,7 +59,7 @@ async function main() {
     .addIdentityToStorage(user.address, await userIdentity.getAddress(), 688); // SRB Iban code
   await txIrStorage.wait();
 
-  //   expect(txIrStorage).to.emit(irStorage, "IdentityRegistered");
+  expect(txIrStorage).to.emit(irStorage, "IdentityStored");
   console.log("Completed");
 }
 

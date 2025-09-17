@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "@onchain-id/solidity": "^2.2.1",
-    "@tokenysolutions/t-rex": "^4.1.4"
+    "@tokenysolutions/t-rex": "^4.1.4",
+    "chai": "^4.5.0"
   }
 }
