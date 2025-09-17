@@ -4,7 +4,7 @@ import TRex from "@tokenysolutions/t-rex";
 import { writeFileSync } from "fs";
 
 async function main() {
-  const [deployer, irAgent] = await ethers.getSigners();
+  const [deployer, _, irAgent] = await ethers.getSigners();
 
   const irAgentAddress = irAgent.address;
 
