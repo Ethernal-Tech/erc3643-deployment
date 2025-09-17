@@ -9,3 +9,17 @@ npm install --save-dev hardhat (to install hardhat)
 npm ci
 npx hardhat run scripts/trex-deploy.ts --network chain // --network chain -> not needed if targeting a default network
 ```
+
+# How to setup hardhat vars
+
+```sh
+npx hardhat vars set DEPLOYER
+npx hardhat vars set CLAIM_ISSUER
+npx hardhat vars set IR_AGENT
+npx hardhat vars set TOKEN_AGENT
+npx hardhat vars set USER
+```
+
+# Addresses
+
+After deployment addresses can be accessed in file `addresses-fluxion.json`

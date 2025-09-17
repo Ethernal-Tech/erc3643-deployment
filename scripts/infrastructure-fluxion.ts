@@ -1,10 +1,15 @@
 import { ethers } from "hardhat";
+import { vars } from "hardhat/config";
 import OnchainID from "@onchain-id/solidity";
 import TRex from "@tokenysolutions/t-rex";
+import { writeFileSync } from "fs";
 
 async function main() {
-  const [deployer] = await ethers.getSigners();
-  const irAgentAddress = "0x85b41C1dfd4b79385C6cEa3450192dF4B4dD14d0";
+  const deployerPrivateKey = vars.get("DEPLOYER");
+  const irAgentPrivateKey = vars.get("IR_AGENT");
+
+  const deployer = new ethers.Wallet(deployerPrivateKey, ethers.provider);
+  const irAgentAddress = new ethers.Wallet(irAgentPrivateKey, null).address;
 
   // OnChainID deployment
   const identityImplementation = await new ethers.ContractFactory(
@@ -394,6 +399,28 @@ async function main() {
     "Identity Registry Storage Proxy ->",
     await identityRegistryStorageProxy.getAddress()
   );
+
+  const addresses = {
+    trexGateway: await trexGateway.getAddress(),
+    gateway: await gateway.getAddress(),
+    identityRegistryStorage: await identityRegistryStorageProxy.getAddress(),
+    countryAllowModule: await countryAllowModuleProxy.getAddress(),
+    conditionalTransferModule:
+      await conditionalTransferModuleProxy.getAddress(),
+    countryRestrictModule: await countryRestrictModuleProxy.getAddress(),
+    exchangeMonthlyLimitsModule:
+      await exchangeMonthlyLimitsModuleProxy.getAddress(),
+    maxBalanceModule: await maxBalanceModuleProxy.getAddress(),
+    supplyLimitModule: await supplyLimitModuleProxy.getAddress(),
+    timeExchangeLimitsModule: await timeExchangeLimitsModuleProxy.getAddress(),
+    timeTransfersLimitsModule:
+      await timeTransfersLimitsModuleProxy.getAddress(),
+    transferFeesModules: await transferFeesModulesProxy.getAddress(),
+    transferRestrictModule: await transferRestrictModuleProxy.getAddress(),
+  };
+
+  writeFileSync("addresses-fluxion.json", JSON.stringify(addresses, null, 2));
+  console.log("Addresses written to addresses-fluxion.json");
 }
 
 // We recommend this pattern to be able to use async/await everywhere
