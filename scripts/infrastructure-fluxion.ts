@@ -6,8 +6,6 @@ import { writeFileSync } from "fs";
 async function main() {
   const [deployer, _, irAgent] = await ethers.getSigners();
 
-  const irAgentAddress = irAgent.address;
-
   // OnChainID deployment
   const identityImplementation = await new ethers.ContractFactory(
     OnchainID.contracts.Identity.abi,
@@ -34,7 +32,7 @@ async function main() {
     OnchainID.contracts.Gateway.abi,
     OnchainID.contracts.Gateway.bytecode,
     deployer
-  ).deploy(await identityFactory.getAddress(), [irAgentAddress]); // anyone can be signer
+  ).deploy(await identityFactory.getAddress(), [irAgent.address]); // anyone can be signer
   await gateway.waitForDeployment();
   // end of OnChainID deployment
 
@@ -396,6 +394,12 @@ async function main() {
     "Identity Registry Storage Proxy ->",
     await identityRegistryStorageProxy.getAddress()
   );
+
+  const irStorage = await ethers.getContractAt(
+    TRex.contracts.IdentityRegistryStorage.abi,
+    await identityRegistryStorageProxy.getAddress()
+  );
+  await irStorage.connect(deployer).addAgent(irAgent.address);
 
   const addresses = {
     trexGateway: await trexGateway.getAddress(),
