@@ -13,11 +13,11 @@ npx hardhat run scripts/trex-deploy.ts --network chain // --network chain -> not
 # How to setup hardhat vars
 
 ```sh
-npx hardhat vars set DEPLOYER
-npx hardhat vars set CLAIM_ISSUER
-npx hardhat vars set IR_AGENT
-npx hardhat vars set TOKEN_AGENT
-npx hardhat vars set USER
+npx hardhat vars set deployer
+npx hardhat vars set claimIssuer
+npx hardhat vars set irAgent
+npx hardhat vars set tokenAgent
+npx hardhat vars set user
 ```
 
 # Addresses

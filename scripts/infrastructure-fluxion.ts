@@ -1,15 +1,12 @@
 import { ethers } from "hardhat";
-import { vars } from "hardhat/config";
 import OnchainID from "@onchain-id/solidity";
 import TRex from "@tokenysolutions/t-rex";
 import { writeFileSync } from "fs";
 
 async function main() {
-  const deployerPrivateKey = vars.get("DEPLOYER");
-  const irAgentPrivateKey = vars.get("IR_AGENT");
+  const [deployer, irAgent] = await ethers.getSigners();
 
-  const deployer = new ethers.Wallet(deployerPrivateKey, ethers.provider);
-  const irAgentAddress = new ethers.Wallet(irAgentPrivateKey, null).address;
+  const irAgentAddress = irAgent.address;
 
   // OnChainID deployment
   const identityImplementation = await new ethers.ContractFactory(
