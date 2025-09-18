@@ -1,6 +1,8 @@
 import { HardhatUserConfig } from "hardhat/config";
 import { vars } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "./tasks/mintToken";
+import "./tasks/kyc";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "chain",
@@ -12,7 +14,6 @@ const config: HardhatUserConfig = {
         vars.get("claimIssuer"),
         vars.get("irAgent"),
         vars.get("tokenAgent"),
-        vars.get("user"),
       ],
     },
   },

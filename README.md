@@ -17,7 +17,6 @@ npx hardhat vars set deployer
 npx hardhat vars set claimIssuer
 npx hardhat vars set irAgent
 npx hardhat vars set tokenAgent
-npx hardhat vars set user
 ```
 
 # Addresses
