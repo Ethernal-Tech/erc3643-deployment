@@ -22,7 +22,9 @@ task("mint-token", "Mints and unpauses a T-Rex token")
       tokenAgent
     );
 
-    const txMint = await token.connect(tokenAgent).mint(user, amount);
+    const txMint = await token
+      .connect(tokenAgent)
+      .mint(user, hre.ethers.parseEther(amount));
     await txMint.wait();
     expect(txMint).to.emit(token, "Transfer");
 

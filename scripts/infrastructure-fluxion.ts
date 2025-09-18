@@ -337,6 +337,29 @@ async function main() {
     await timeTransfersLimitsModuleProxy.getAddress()
   );
 
+  // TokenListingRestrictionsModule
+  const tokenListingRestrictionsModule = await new ethers.ContractFactory(
+    TRex.contracts.TokenListingRestrictionsModule.abi,
+    TRex.contracts.TokenListingRestrictionsModule.bytecode,
+    deployer
+  ).deploy();
+  await tokenListingRestrictionsModule.waitForDeployment();
+
+  const tokenListingRestrictionsModuleProxy = await new ethers.ContractFactory(
+    TRex.contracts.ModuleProxy.abi,
+    TRex.contracts.ModuleProxy.bytecode,
+    deployer
+  ).deploy(
+    await tokenListingRestrictionsModule.getAddress(),
+    tokenListingRestrictionsModule.interface.encodeFunctionData("initialize")
+  );
+  await tokenListingRestrictionsModuleProxy.waitForDeployment();
+
+  console.log(
+    "Token Listing Restrictions Module Proxy ->",
+    await tokenListingRestrictionsModuleProxy.getAddress()
+  );
+
   // TransferFeesModules
   const transferFeesModules = await new ethers.ContractFactory(
     TRex.contracts.TransferFeesModule.abi,
@@ -426,6 +449,8 @@ async function main() {
       await timeTransfersLimitsModuleProxy.getAddress(),
     transferFeesModules: await transferFeesModulesProxy.getAddress(),
     transferRestrictModule: await transferRestrictModuleProxy.getAddress(),
+    tokenListingRestrictionsModule:
+      await tokenListingRestrictionsModuleProxy.getAddress(),
   };
 
   writeFileSync("addresses-fluxion.json", JSON.stringify(addresses, null, 2));
