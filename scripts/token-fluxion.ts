@@ -1,0 +1,74 @@
+import { ethers } from "hardhat";
+import OnchainID from "@onchain-id/solidity";
+import TRex from "@tokenysolutions/t-rex";
+import { expect } from "chai";
+import addresses from "../addresses-fluxion.json";
+
+async function main() {
+  const [deployer, _, irAgent, tokenAgent] = await ethers.getSigners();
+
+  const trexGateway = await ethers.getContractAt(
+    TRex.contracts.TREXGateway.abi,
+    addresses.trexGateway,
+    deployer
+  );
+  const trexFactory = await ethers.getContractAt(
+    TRex.contracts.TREXFactory.abi,
+    await trexGateway.getFactory(),
+    deployer
+  );
+  const identityFactory = await ethers.getContractAt(
+    OnchainID.contracts.Factory.abi,
+    await trexFactory.getIdFactory(),
+    deployer
+  );
+
+  const txDeployTREX = await trexGateway.connect(deployer).deployTREXSuite(
+    {
+      owner: irAgent.address, // token owner/admin can be any account (doesn't have to be deployer)
+      name: "Token Name98",
+      symbol: "ETHRS",
+      decimals: 18,
+      irs: addresses.identityRegistryStorage, // if irs address is passed then all users from that irs will be reused (multiple tokens case)
+      // irs: ethers.ZeroAddress,
+      ONCHAINID: ethers.ZeroAddress,
+      irAgents: [irAgent.address],
+      tokenAgents: [tokenAgent.address],
+      complianceModules: [addresses.countryAllowModule],
+      complianceSettings: [
+        new ethers.Interface([
+          "function batchAllowCountries(uint16[])",
+        ]).encodeFunctionData("batchAllowCountries", [[688]]),
+      ],
+    },
+    {
+      claimTopics: [],
+      issuers: [],
+      issuerClaims: [],
+    }
+  );
+  const receipt = await txDeployTREX.wait();
+
+  const trexSuiteDeployed = await trexFactory.queryFilter(
+    trexFactory.filters.TREXSuiteDeployed(),
+    receipt.blockNumber,
+    receipt.blockNumber
+  );
+  expect(trexSuiteDeployed).to.have.lengthOf(1);
+
+  console.log("Token address -> %s", trexSuiteDeployed[0].args[0]);
+
+  expect(txDeployTREX).to.emit(trexGateway, "GatewaySuiteDeploymentProcessed");
+  expect(txDeployTREX).to.emit(trexFactory, "TREXSuiteDeployed");
+  expect(txDeployTREX).to.emit(identityFactory, "Deployed");
+  expect(txDeployTREX).to.emit(identityFactory, "TokenLinked");
+
+  console.log("Completed");
+}
+
+// We recommend this pattern to be able to use async/await everywhere
+// and properly handle errors.
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

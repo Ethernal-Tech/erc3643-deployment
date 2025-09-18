@@ -399,7 +399,15 @@ async function main() {
     TRex.contracts.IdentityRegistryStorage.abi,
     await identityRegistryStorageProxy.getAddress()
   );
-  await irStorage.connect(deployer).addAgent(irAgent.address);
+  const txAddAgent = await irStorage
+    .connect(deployer)
+    .addAgent(irAgent.address);
+  await txAddAgent.wait();
+
+  const transferOwnershipIRS = await irStorage
+    .connect(deployer)
+    .transferOwnership(await trexFactory.getAddress());
+  await transferOwnershipIRS.wait();
 
   const addresses = {
     trexGateway: await trexGateway.getAddress(),
