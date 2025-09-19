@@ -3,6 +3,7 @@ import { vars } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "./tasks/mintToken";
 import "./tasks/kyc";
+import "./tasks/transfer";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "chain",

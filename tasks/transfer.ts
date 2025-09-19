@@ -3,14 +3,19 @@ import TRex from "@tokenysolutions/t-rex";
 import { expect } from "chai";
 import addresses from "../addresses-fluxion.json";
 
-task("mint-token", "Mints and unpauses a T-Rex token")
-  .addParam("user", "Recipient address")
+task("transfer", "Transfers from sender to receiver")
+  .addParam("sender", "Sender private key")
+  .addParam("receiver", "Receiver address")
   .addParam("token", "Token contract address")
-  .addParam("amount", "Amount to mint")
+  .addParam("amount", "Amount to send")
   .setAction(async (taskArgs, hre) => {
-    const { user, token: tokenAddress, amount } = taskArgs;
+    const { sender, receiver, token: tokenAddress, amount } = taskArgs;
+    const senderWallet = new hre.ethers.Wallet(sender, hre.ethers.provider);
 
-    if (!hre.ethers.isAddress(user)) throw new Error("Invalid user address");
+    const etherAmount = hre.ethers.parseEther(amount);
+
+    if (!hre.ethers.isAddress(receiver))
+      throw new Error("Invalid user address");
     if (!hre.ethers.isAddress(tokenAddress))
       throw new Error("Invalid token address");
 
@@ -30,25 +35,20 @@ task("mint-token", "Mints and unpauses a T-Rex token")
       irAgent
     );
 
-    const etherAmount = hre.ethers.parseEther(amount);
-
     const tx = await compliance.callModuleFunction(
       new hre.ethers.Interface([
         "function batchApproveTransfers(address[], address[], uint256[])",
       ]).encodeFunctionData("batchApproveTransfers", [
-        [hre.ethers.ZeroAddress],
-        [user],
+        [senderWallet.address],
+        [receiver],
         [etherAmount],
       ]),
       addresses.conditionalTransferModule
     );
-    await tx.wait();
 
-    const txMint = await token.connect(tokenAgent).mint(user, etherAmount);
-    await txMint.wait();
-    expect(txMint).to.emit(token, "Transfer");
+    const txTransfer = await token
+      .connect(senderWallet)
+      .transfer(receiver, etherAmount);
 
-    const txUnpause = await token.connect(tokenAgent).unpause();
-    await txUnpause.wait();
-    expect(txUnpause).to.emit(token, "Unpaused");
+    await txTransfer.wait();
   });

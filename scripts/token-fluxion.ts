@@ -30,15 +30,21 @@ async function main() {
       symbol: "ETHRS",
       decimals: 18,
       irs: addresses.identityRegistryStorage, // if irs address is passed then all users from that irs will be reused (multiple tokens case)
-      // irs: ethers.ZeroAddress,
       ONCHAINID: ethers.ZeroAddress,
       irAgents: [irAgent.address],
       tokenAgents: [tokenAgent.address],
-      complianceModules: [addresses.countryAllowModule],
+      complianceModules: [
+        addresses.countryAllowModule,
+        addresses.maxBalanceModule,
+        addresses.conditionalTransferModule,
+      ],
       complianceSettings: [
         new ethers.Interface([
           "function batchAllowCountries(uint16[])",
         ]).encodeFunctionData("batchAllowCountries", [[688]]),
+        new ethers.Interface([
+          "function setMaxBalance(uint256)",
+        ]).encodeFunctionData("setMaxBalance", [ethers.parseEther("1000000")]),
       ],
     },
     {
