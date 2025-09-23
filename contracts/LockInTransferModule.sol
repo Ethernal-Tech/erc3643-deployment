@@ -5,8 +5,10 @@ pragma solidity 0.8.17;
 
 import "@tokenysolutions/t-rex/contracts/compliance/modular/modules/AbstractModuleUpgradeable.sol";
 import "@tokenysolutions/t-rex/contracts/token/IToken.sol";
+import "hardhat/console.sol";
 
 contract LockInTransferModule is AbstractModuleUpgradeable {
+    event WaitPeriod(address compliance, uint256 value);
     struct TransferLimit {
         uint256 amount;
         uint256 untilBlock;
@@ -32,6 +34,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
     mapping(address => uint256) private waitPeriod;
     function setWaitPeriod(uint256 _waitPeriod) external onlyComplianceCall {
         waitPeriod[msg.sender] = _waitPeriod;
+        emit WaitPeriod(msg.sender, _waitPeriod);
     }
 
     function _resetQueue(Queue storage queue) internal {
@@ -51,7 +54,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         Queue storage queue = transferLimits[token][receiver];
         queue.items[queue.end] = TransferLimit(
             amount,
-            block.number + waitPeriod[msg.sender]
+            block.number + waitPeriod[token]
         );
         queue.end++;
         queue.balance += amount;
@@ -67,16 +70,16 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         }
 
         Queue storage queue = transferLimits[token][sender];
-        bool foundLimitUntilEnd = false;
+        bool doResetQueue = true;
         for (uint256 i = queue.start; i < queue.end; i++) {
             if (queue.items[i].untilBlock >= block.number) {
-                foundLimitUntilEnd = true;
+                doResetQueue = false;
                 queue.start = i;
                 break;
             }
         }
 
-        if (!foundLimitUntilEnd) {
+        if (doResetQueue) {
             _resetQueue(queue);
         }
 

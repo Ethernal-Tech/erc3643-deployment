@@ -9,7 +9,7 @@ const config: HardhatUserConfig = {
   defaultNetwork: "chain",
   networks: {
     chain: {
-      url: "http://localhost:10002",
+      url: "http://localhost:8545",
       accounts: [
         vars.get("deployer"),
         vars.get("claimIssuer"),
@@ -18,6 +18,7 @@ const config: HardhatUserConfig = {
       ],
     },
   },
+  solidity: "0.8.17",
 };
 
 export default config;
