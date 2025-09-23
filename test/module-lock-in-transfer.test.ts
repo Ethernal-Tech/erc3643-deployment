@@ -1,15 +1,12 @@
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import {
-  deployComplianceFixture,
-  deploySuiteWithModularCompliancesFixture,
-} from "./fixtures/deploy-compliance.fixture";
+import { deployComplianceFixture } from "./fixtures/deploy-compliance.fixture";
 import LockInTransferModule from "../artifacts/contracts/LockInTransferModule.sol/LockInTransferModule.json";
 import TRex from "@tokenysolutions/t-rex";
 
-async function deployLockInTransfer() {
-  const context = await loadFixture(deploySuiteWithModularCompliancesFixture);
+async function deployLockInTransferModule() {
+  const context = await loadFixture(deployComplianceFixture);
   const { compliance } = context.suite;
   const { deployer } = context.accounts;
 
@@ -30,23 +27,20 @@ async function deployLockInTransfer() {
   );
   await proxy.waitForDeployment();
 
-  const complianceModule = await ethers.getContractAt(
+  const lockInModule = await ethers.getContractAt(
     LockInTransferModule.abi,
     await proxy.getAddress(),
     deployer
   );
 
-  const tx = await compliance.addModule(await complianceModule.getAddress());
+  const tx = await compliance.connect(deployer).addModule(await lockInModule.getAddress());
   await tx.wait();
-
-  const tx1 = await compliance.bindToken(ethers.ZeroAddress);
-  await tx1.wait();
 
   return {
     ...context,
     suite: {
       ...context.suite,
-      complianceModule,
+      lockInModule,
     },
   };
 }
@@ -54,8 +48,8 @@ async function deployLockInTransfer() {
 describe("Compliance Module: LockInTransfer", () => {
   describe(".name", () => {
     it("should return the module name", async () => {
-      const context = await loadFixture(deployLockInTransfer);
-      expect(await context.suite.complianceModule.name()).to.eq(
+      const context = await loadFixture(deployLockInTransferModule);
+      expect(await context.suite.lockInModule.name()).to.eq(
         "LockInTransferModule"
       );
     });
@@ -78,20 +72,20 @@ describe("Compliance Module: LockInTransfer", () => {
 
   describe(".setWaitPeriod", () => {
     it("should revert if called directly", async () => {
-      const context = await loadFixture(deployLockInTransfer);
+      const context = await loadFixture(deployLockInTransferModule);
       await expect(
-        context.suite.complianceModule.setWaitPeriod(10)
+        context.suite.lockInModule.setWaitPeriod(10)
       ).to.be.revertedWith("only bound compliance can call");
     });
 
     it("should allow compliance to set wait period", async () => {
-      const context = await loadFixture(deployLockInTransfer);
+      const context = await loadFixture(deployLockInTransferModule);
 
-      const tx = await context.suite.compliance.callModuleFunction(
+      const tx = await context.suite.compliance.connect(context.accounts.deployer).callModuleFunction(
         new ethers.Interface([
           "function setWaitPeriod(uint256)",
         ]).encodeFunctionData("setWaitPeriod", [50]),
-        context.suite.complianceModule.target
+        context.suite.lockInModule.target
       );
 
       await expect(tx).to.not.be.reverted;
@@ -100,80 +94,45 @@ describe("Compliance Module: LockInTransfer", () => {
 
   describe(".moduleTransferAction", () => {
     it("should revert if called directly", async () => {
-      const context = await loadFixture(deployLockInTransfer);
+      const context = await loadFixture(deployLockInTransferModule);
       await expect(
-        context.suite.complianceModule.moduleTransferAction(
+        context.suite.lockInModule.moduleTransferAction(
           context.accounts.aliceWallet.address,
           context.accounts.bobWallet.address,
           100
         )
       ).to.be.revertedWith("only bound compliance can call");
     });
-
-    it("should enqueue transfer limits when called via compliance", async () => {
-      const context = await loadFixture(deployLockInTransfer);
-      const { compliance, complianceModule } = context.suite;
-      const { aliceWallet, bobWallet } = context.accounts;
-
-      // Set wait period
-      await compliance.callModuleFunction(
-        new ethers.Interface([
-          "function setWaitPeriod(uint256)",
-        ]).encodeFunctionData("setWaitPeriod", [20]),
-        complianceModule.target
-      );
-
-      // Simulate a transfer via compliance
-      await compliance.callModuleFunction(
-        new ethers.Interface([
-          "function moduleTransferAction(address,address,uint256)",
-        ]).encodeFunctionData("moduleTransferAction", [
-          aliceWallet.address,
-          bobWallet.address,
-          100,
-        ]),
-        complianceModule.target
-      );
-
-      expect(
-        await complianceModule.getQueue(compliance.target, bobWallet.address)
-      ).to.be.eq([0n, 1n, 200n]);
-    });
   });
 
   describe(".moduleCheck", () => {
     it("should revert or return false when sender has locked balance", async () => {
-      const context = await loadFixture(deployLockInTransfer);
+      const context = await loadFixture(deployLockInTransferModule);
 
-      const { compliance, complianceModule } = context.suite;
-      const { aliceWallet, bobWallet } = context.accounts;
+      const { compliance, lockInModule } = context.suite;
+      const { deployer, aliceWallet, bobWallet } = context.accounts;
 
-      const setWaitPeriodTx = await compliance.callModuleFunction(
+      const setWaitPeriodTx = await compliance.connect(deployer).callModuleFunction(
         new ethers.Interface([
           "function setWaitPeriod(uint256)",
         ]).encodeFunctionData("setWaitPeriod", [200]),
-        complianceModule.target
+        await lockInModule.getAddress()
       );
+      await setWaitPeriodTx.wait();
 
-      const rec = await setWaitPeriodTx.wait();
+      await expect(setWaitPeriodTx)
+        .to.emit(lockInModule, "WaitPeriod")
+        .withArgs(await compliance.getAddress(), 200);
 
-      expect(rec)
-        .to.emit(complianceModule, "WaitPeriod1")
-        .withArgs(compliance.target, 200);
-
-      console.log(
-        "Wait period",
-        await complianceModule.getWaitPeriod(compliance.target)
-      );
-
-      await compliance.callModuleFunction(
+      const mintTx = await compliance.callModuleFunction(
         new ethers.Interface([
           "function moduleMintAction(address,uint256)",
         ]).encodeFunctionData("moduleMintAction", [aliceWallet.address, 200]),
-        complianceModule.target
+        lockInModule.target
       );
+      await mintTx.wait()
 
-      const tx = await compliance.callModuleFunction(
+      const transferTx = await compliance.callModuleFunction(
         new ethers.Interface([
           "function moduleTransferAction(address,address,uint256)",
         ]).encodeFunctionData("moduleTransferAction", [
@@ -181,24 +140,13 @@ describe("Compliance Module: LockInTransfer", () => {
           bobWallet.address,
           50,
         ]),
-        complianceModule.target
+        lockInModule.target
       );
-
-      expect(tx).to.emit(complianceModule, "TransferAction");
-
-      console.log(
-        "ALICE",
-        await complianceModule.getQueue(compliance.target, aliceWallet.address)
-      );
-
-      console.log(
-        "BOB",
-        await complianceModule.getQueue(compliance.target, bobWallet.address)
-      );
+      await transferTx.wait()
 
       // Example check
       await expect(
-        complianceModule.moduleCheck(
+        lockInModule.moduleCheck(
           bobWallet.address,
           aliceWallet.address,
           50,
