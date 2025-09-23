@@ -9,7 +9,7 @@ const config: HardhatUserConfig = {
   defaultNetwork: "chain",
   networks: {
     chain: {
-      url: "http://localhost:8545",
+      url: "http://localhost:10002",
       accounts: [
         vars.get("deployer"),
         vars.get("claimIssuer"),
