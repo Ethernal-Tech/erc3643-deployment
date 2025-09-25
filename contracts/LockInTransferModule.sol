@@ -129,8 +129,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         address _to,
         uint256 _value
     ) external override onlyComplianceCall {
-        Queue storage queue = transferLimits[msg.sender][_to];
-        queue.balance += _value;
+        _enqueueTransferLimit(msg.sender, _to, _value);
     }
 
     /**

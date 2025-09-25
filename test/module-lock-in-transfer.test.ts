@@ -8,28 +8,26 @@ import TRex from "@tokenysolutions/t-rex";
 async function deployLockInTransferModule() {
   const context = await loadFixture(deployComplianceFixture);
   const { token } = context.suite;
-  const { deployer, tokenAgent } = context.accounts;
+  const { deployer } = context.accounts;
 
   const module = await new ethers.ContractFactory(
     LockInTransferModule.abi,
     LockInTransferModule.bytecode,
     deployer
   ).deploy();
-  await module.waitForDeployment();
 
   const proxy = await new ethers.ContractFactory(
     TRex.contracts.ModuleProxy.abi,
     TRex.contracts.ModuleProxy.bytecode,
     deployer
   ).deploy(
-    await module.getAddress(),
+    module.target,
     module.interface.encodeFunctionData("initialize")
   );
-  await proxy.waitForDeployment();
 
   const lockInModule = await ethers.getContractAt(
     LockInTransferModule.abi,
-    await proxy.getAddress(),
+    proxy.target,
     deployer
   );
 
@@ -40,8 +38,7 @@ async function deployLockInTransferModule() {
     complianceAddr
   );
 
-  const tx = await compliance.connect(deployer).addModule(lockInModule.target);
-  await tx.wait();
+  await compliance.addModule(lockInModule.target);
 
   return {
     ...context,
@@ -90,7 +87,6 @@ describe("Compliance Module: LockInTransfer", () => {
       const context = await loadFixture(deployLockInTransferModule);
 
       const tx = await context.suite.compliance
-        .connect(context.accounts.deployer)
         .callModuleFunction(
           new ethers.Interface([
             "function setWaitPeriod(uint256)",
@@ -119,13 +115,12 @@ describe("Compliance Module: LockInTransfer", () => {
       const { compliance, lockInModule } = context.suite;
       const { aliceWallet, bobWallet, deployer } = context.accounts;
 
-      const mintTx = await compliance.callModuleFunction(
+      await compliance.callModuleFunction(
         new ethers.Interface([
           "function moduleMintAction(address,uint256)",
         ]).encodeFunctionData("moduleMintAction", [aliceWallet.address, 50]),
         lockInModule.target
       );
-      await mintTx.wait();
 
       const transferTx = await compliance.callModuleFunction(
         new ethers.Interface([
@@ -150,31 +145,30 @@ describe("Compliance Module: LockInTransfer", () => {
       const context = await loadFixture(deployLockInTransferModule);
 
       const { compliance, lockInModule } = context.suite;
-      const { deployer, aliceWallet, bobWallet } = context.accounts;
+      const { aliceWallet, bobWallet } = context.accounts;
 
       const setWaitPeriodTx = await compliance
-        .connect(deployer)
         .callModuleFunction(
           new ethers.Interface([
             "function setWaitPeriod(uint256)",
           ]).encodeFunctionData("setWaitPeriod", [1]),
-          await lockInModule.getAddress()
+          lockInModule.target
         );
-      await setWaitPeriodTx.wait();
 
       await expect(setWaitPeriodTx)
         .to.emit(lockInModule, "WaitPeriod")
-        .withArgs(await compliance.getAddress(), 1);
+        .withArgs(compliance.target, 1);
 
-      const mintTx = await compliance.callModuleFunction(
+      await compliance.callModuleFunction(
         new ethers.Interface([
           "function moduleMintAction(address,uint256)",
         ]).encodeFunctionData("moduleMintAction", [aliceWallet.address, 50]),
         lockInModule.target
       );
-      await mintTx.wait();
 
-      const transferTx = await compliance.callModuleFunction(
+      await mine(2);
+
+      await compliance.callModuleFunction(
         new ethers.Interface([
           "function moduleTransferAction(address,address,uint256)",
         ]).encodeFunctionData("moduleTransferAction", [
@@ -184,7 +178,6 @@ describe("Compliance Module: LockInTransfer", () => {
         ]),
         lockInModule.target
       );
-      await transferTx.wait();
 
       await mine(2);
 
@@ -205,28 +198,37 @@ describe("Compliance Module: LockInTransfer", () => {
       const { deployer, aliceWallet, bobWallet } = context.accounts;
 
       const setWaitPeriodTx = await compliance
-        .connect(deployer)
         .callModuleFunction(
           new ethers.Interface([
             "function setWaitPeriod(uint256)",
           ]).encodeFunctionData("setWaitPeriod", [50]),
-          await lockInModule.getAddress()
+          lockInModule.target
         );
-      await setWaitPeriodTx.wait();
 
       await expect(setWaitPeriodTx)
         .to.emit(lockInModule, "WaitPeriod")
-        .withArgs(await compliance.getAddress(), 50);
+        .withArgs(compliance.target, 50);
 
-      const mintTx = await compliance.callModuleFunction(
+      await compliance.callModuleFunction(
         new ethers.Interface([
           "function moduleMintAction(address,uint256)",
         ]).encodeFunctionData("moduleMintAction", [aliceWallet.address, 50]),
         lockInModule.target
       );
-      await mintTx.wait();
 
-      const transferTx = await compliance.callModuleFunction(
+      // after mine alice can't execute transfer
+      await expect(
+        lockInModule.moduleCheck(
+          aliceWallet.address,
+          bobWallet.address,
+          50,
+          compliance.target
+        )
+      ).to.eventually.false;
+
+      await mine(51)
+
+      await compliance.callModuleFunction(
         new ethers.Interface([
           "function moduleTransferAction(address,address,uint256)",
         ]).encodeFunctionData("moduleTransferAction", [
@@ -236,9 +238,8 @@ describe("Compliance Module: LockInTransfer", () => {
         ]),
         lockInModule.target
       );
-      await transferTx.wait();
 
-      // Example check
+      // after receive bob can't execute transfer
       await expect(
         lockInModule.moduleCheck(
           bobWallet.address,

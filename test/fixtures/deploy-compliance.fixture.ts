@@ -14,28 +14,24 @@ export async function deployComplianceFixture() {
     OnchainID.contracts.Identity.bytecode,
     deployer
   ).deploy(deployer.address, true);
-  await identityImplementation.waitForDeployment();
 
   const identityImplementationAuthority = await new ethers.ContractFactory(
     OnchainID.contracts.ImplementationAuthority.abi,
     OnchainID.contracts.ImplementationAuthority.bytecode,
     deployer
-  ).deploy(await identityImplementation.getAddress());
-  await identityImplementationAuthority.waitForDeployment();
-
+  ).deploy(identityImplementation.target);
+  
   const identityFactory = await new ethers.ContractFactory(
     OnchainID.contracts.Factory.abi,
     OnchainID.contracts.Factory.bytecode,
     deployer
-  ).deploy(await identityImplementationAuthority.getAddress());
-  await identityFactory.waitForDeployment();
-
+  ).deploy(identityImplementationAuthority.target);
+  
   const gateway = await new ethers.ContractFactory(
     OnchainID.contracts.Gateway.abi,
     OnchainID.contracts.Gateway.bytecode,
     deployer
-  ).deploy(await identityFactory.getAddress(), [irAgent.address]); // anyone can be signer
-  await gateway.waitForDeployment();
+  ).deploy(identityFactory.target, [irAgent.address]); // anyone can be signer
   // end of OnChainID deployment
 
   const trustedIssuersRegistryImplementation = await new ethers.ContractFactory(
@@ -43,7 +39,6 @@ export async function deployComplianceFixture() {
     TRex.contracts.TrustedIssuersRegistry.bytecode,
     deployer
   ).deploy();
-  await trustedIssuersRegistryImplementation.waitForDeployment();
 
   const identityRegistryStorageImplementation =
     await new ethers.ContractFactory(
@@ -51,36 +46,31 @@ export async function deployComplianceFixture() {
       TRex.contracts.IdentityRegistryStorage.bytecode,
       deployer
     ).deploy();
-  await identityRegistryStorageImplementation.waitForDeployment();
-
+  
   const identityRegistryImplementation = await new ethers.ContractFactory(
     TRex.contracts.IdentityRegistry.abi,
     TRex.contracts.IdentityRegistry.bytecode,
     deployer
   ).deploy();
-  await identityRegistryImplementation.waitForDeployment();
-
+  
   const modularComplianceImplementation = await new ethers.ContractFactory(
     TRex.contracts.ModularCompliance.abi,
     TRex.contracts.ModularCompliance.bytecode,
     deployer
   ).deploy();
-  await modularComplianceImplementation.waitForDeployment();
-
+  
   const tokenImplementation = await new ethers.ContractFactory(
     TRex.contracts.Token.abi,
     TRex.contracts.Token.bytecode,
     deployer
   ).deploy();
-  await tokenImplementation.waitForDeployment();
-
+  
   const claimTopicsRegistryImplementation = await new ethers.ContractFactory(
     TRex.contracts.ClaimTopicsRegistry.abi,
     TRex.contracts.ClaimTopicsRegistry.bytecode,
     deployer
   ).deploy();
-  await claimTopicsRegistryImplementation.waitForDeployment();
-
+  
   const versionStruct = {
     major: 4,
     minor: 0,
@@ -88,12 +78,12 @@ export async function deployComplianceFixture() {
   };
 
   const contractsStruct = {
-    tokenImplementation: await tokenImplementation.getAddress(),
-    ctrImplementation: await claimTopicsRegistryImplementation.getAddress(),
-    irImplementation: await identityRegistryImplementation.getAddress(),
-    irsImplementation: await identityRegistryStorageImplementation.getAddress(),
-    tirImplementation: await trustedIssuersRegistryImplementation.getAddress(),
-    mcImplementation: await modularComplianceImplementation.getAddress(),
+    tokenImplementation: tokenImplementation.target,
+    ctrImplementation: claimTopicsRegistryImplementation.target,
+    irImplementation: identityRegistryImplementation.target,
+    irsImplementation: identityRegistryStorageImplementation.target,
+    tirImplementation: trustedIssuersRegistryImplementation.target,
+    mcImplementation: modularComplianceImplementation.target,
   };
 
   const trexImplementationAuthority = await new ethers.ContractFactory(
@@ -101,53 +91,35 @@ export async function deployComplianceFixture() {
     TRex.contracts.TREXImplementationAuthority.bytecode,
     deployer
   ).deploy(true, ethers.ZeroAddress, ethers.ZeroAddress);
-  await trexImplementationAuthority.waitForDeployment();
 
-  const txAddTREX = await trexImplementationAuthority
-    .connect(deployer)
-    .addAndUseTREXVersion(versionStruct, contractsStruct);
-  await txAddTREX.wait();
+  await trexImplementationAuthority.addAndUseTREXVersion(versionStruct, contractsStruct);
 
   const trexFactory = await new ethers.ContractFactory(
     TRex.contracts.TREXFactory.abi,
     TRex.contracts.TREXFactory.bytecode,
     deployer
   ).deploy(
-    await trexImplementationAuthority.getAddress(),
-    await identityFactory.getAddress()
+    trexImplementationAuthority.target,
+    identityFactory.target
   );
-  await trexFactory.waitForDeployment();
-
-  const txAddTokenFactory = await identityFactory
-    .connect(deployer)
-    .addTokenFactory(await trexFactory.getAddress());
-  await txAddTokenFactory.wait();
+  
+  await identityFactory.addTokenFactory(trexFactory.target);
 
   const trexGateway = await new ethers.ContractFactory(
     TRex.contracts.TREXGateway.abi,
     TRex.contracts.TREXGateway.bytecode,
     deployer
-  ).deploy(await trexFactory.getAddress(), false);
-  await trexGateway.waitForDeployment();
-
-  const txAddDeployer = await trexGateway
-    .connect(deployer)
-    .addDeployer(deployer.address); // token deployer can be anyone
-  await txAddDeployer.wait();
-
+  ).deploy(trexFactory.target, false);
+  
+  await trexGateway.addDeployer(deployer.address); // token deployer can be anyone
+  
   // transfer trexFactory ownership to trexGateway
-  const trexGatewayOwnership = await trexFactory
-    .connect(deployer)
-    .transferOwnership(await trexGateway.getAddress());
-  await trexGatewayOwnership.wait();
+  await trexFactory.transferOwnership(trexGateway.target);
 
   // transfer identityFactory ownership to gateway in order to allow identity creation by users
-  const txTransferOwnership = await identityFactory
-    .connect(deployer)
-    .transferOwnership(await gateway.getAddress());
-  await txTransferOwnership.wait();
+  await identityFactory.transferOwnership(gateway.target);
 
-  const txDeployTREX = await trexGateway.connect(deployer).deployTREXSuite(
+  const txDeployTREX = await trexGateway.deployTREXSuite(
     {
       owner: deployer.address, // token owner/admin can be any account (doesn't have to be deployer)
       name: "Token Name98",
