@@ -2,6 +2,7 @@ import { ethers } from "hardhat";
 import OnchainID from "@onchain-id/solidity";
 import TRex from "@tokenysolutions/t-rex";
 import { writeFileSync } from "fs";
+import LockInTransferModule from "../artifacts/contracts/LockInTransferModule.sol/LockInTransferModule.json";
 
 async function main() {
   const [deployer, _, irAgent] = await ethers.getSigners();
@@ -406,6 +407,29 @@ async function main() {
     await transferRestrictModuleProxy.getAddress()
   );
 
+  // LockInTransferModule
+  const lockInTransferModule = await new ethers.ContractFactory(
+    LockInTransferModule.abi,
+    LockInTransferModule.bytecode,
+    deployer
+  ).deploy();
+  await lockInTransferModule.waitForDeployment();
+
+  const lockInTransferModuleProxy = await new ethers.ContractFactory(
+    TRex.contracts.ModuleProxy.abi,
+    TRex.contracts.ModuleProxy.bytecode,
+    deployer
+  ).deploy(
+    await lockInTransferModule.getAddress(),
+    lockInTransferModule.interface.encodeFunctionData("initialize")
+  );
+  await lockInTransferModuleProxy.waitForDeployment();
+
+  console.log(
+    "Lock In Transfer Module Proxy ->",
+    await lockInTransferModuleProxy.getAddress()
+  );
+
   const identityRegistryStorageProxy = await new ethers.ContractFactory(
     TRex.contracts.IdentityRegistryStorageProxy.abi,
     TRex.contracts.IdentityRegistryStorageProxy.bytecode,
@@ -437,20 +461,17 @@ async function main() {
     gateway: await gateway.getAddress(),
     identityRegistryStorage: await identityRegistryStorageProxy.getAddress(),
     countryAllowModule: await countryAllowModuleProxy.getAddress(),
-    conditionalTransferModule:
-      await conditionalTransferModuleProxy.getAddress(),
+    conditionalTransferModule: await conditionalTransferModuleProxy.getAddress(),
     countryRestrictModule: await countryRestrictModuleProxy.getAddress(),
-    exchangeMonthlyLimitsModule:
-      await exchangeMonthlyLimitsModuleProxy.getAddress(),
+    exchangeMonthlyLimitsModule: await exchangeMonthlyLimitsModuleProxy.getAddress(),
     maxBalanceModule: await maxBalanceModuleProxy.getAddress(),
     supplyLimitModule: await supplyLimitModuleProxy.getAddress(),
     timeExchangeLimitsModule: await timeExchangeLimitsModuleProxy.getAddress(),
-    timeTransfersLimitsModule:
-      await timeTransfersLimitsModuleProxy.getAddress(),
+    timeTransfersLimitsModule: await timeTransfersLimitsModuleProxy.getAddress(),
     transferFeesModules: await transferFeesModulesProxy.getAddress(),
     transferRestrictModule: await transferRestrictModuleProxy.getAddress(),
-    tokenListingRestrictionsModule:
-      await tokenListingRestrictionsModuleProxy.getAddress(),
+    tokenListingRestrictionsModule: await tokenListingRestrictionsModuleProxy.getAddress(),
+    lockInTransferModule: await lockInTransferModuleProxy.getAddress(),
   };
 
   writeFileSync("addresses-fluxion.json", JSON.stringify(addresses, null, 2));
