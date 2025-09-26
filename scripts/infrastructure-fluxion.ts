@@ -102,24 +102,17 @@ async function main() {
   ).deploy(true, ethers.ZeroAddress, ethers.ZeroAddress);
   await trexImplementationAuthority.waitForDeployment();
 
-  const txAddTREX = await trexImplementationAuthority
-    .connect(deployer)
-    .addAndUseTREXVersion(versionStruct, contractsStruct);
+  const txAddTREX = await trexImplementationAuthority.connect(deployer).addAndUseTREXVersion(versionStruct, contractsStruct);
   await txAddTREX.wait();
 
   const trexFactory = await new ethers.ContractFactory(
     TRex.contracts.TREXFactory.abi,
     TRex.contracts.TREXFactory.bytecode,
     deployer
-  ).deploy(
-    await trexImplementationAuthority.getAddress(),
-    await identityFactory.getAddress()
-  );
+  ).deploy(await trexImplementationAuthority.getAddress(), await identityFactory.getAddress());
   await trexFactory.waitForDeployment();
 
-  const txAddTokenFactory = await identityFactory
-    .connect(deployer)
-    .addTokenFactory(await trexFactory.getAddress());
+  const txAddTokenFactory = await identityFactory.connect(deployer).addTokenFactory(await trexFactory.getAddress());
   await txAddTokenFactory.wait();
 
   const trexGateway = await new ethers.ContractFactory(
@@ -129,27 +122,18 @@ async function main() {
   ).deploy(await trexFactory.getAddress(), false);
   await trexGateway.waitForDeployment();
 
-  const txAddDeployer = await trexGateway
-    .connect(deployer)
-    .addDeployer(deployer.address); // token deployer can be anyone
+  const txAddDeployer = await trexGateway.connect(deployer).addDeployer(deployer.address); // token deployer can be anyone
   await txAddDeployer.wait();
 
   // transfer trexFactory ownership to trexGateway
-  const trexGatewayOwnership = await trexFactory
-    .connect(deployer)
-    .transferOwnership(await trexGateway.getAddress());
+  const trexGatewayOwnership = await trexFactory.connect(deployer).transferOwnership(await trexGateway.getAddress());
   await trexGatewayOwnership.wait();
 
   // transfer identityFactory ownership to gateway in order to allow identity creation by users
-  const txTransferOwnership = await identityFactory
-    .connect(deployer)
-    .transferOwnership(await gateway.getAddress());
+  const txTransferOwnership = await identityFactory.connect(deployer).transferOwnership(await gateway.getAddress());
   await txTransferOwnership.wait();
 
-  console.log(
-    "TREXGateway address -> %s",
-    (await trexGateway.getAddress()).toString()
-  );
+  console.log("TREXGateway address -> %s", (await trexGateway.getAddress()).toString());
   console.log("Gateway address -> %s", (await gateway.getAddress()).toString());
 
   // TREXGateway contains trexFactory; trexFactory contains idFactory, token; token contains MC, IR; IR contains IRS, TIR, CTR
@@ -437,23 +421,16 @@ async function main() {
   ).deploy(await trexImplementationAuthority.getAddress());
   await identityRegistryStorageProxy.waitForDeployment();
 
-  console.log(
-    "Identity Registry Storage Proxy ->",
-    await identityRegistryStorageProxy.getAddress()
-  );
+  console.log("Identity Registry Storage Proxy ->", await identityRegistryStorageProxy.getAddress());
 
   const irStorage = await ethers.getContractAt(
     TRex.contracts.IdentityRegistryStorage.abi,
     await identityRegistryStorageProxy.getAddress()
   );
-  const txAddAgent = await irStorage
-    .connect(deployer)
-    .addAgent(irAgent.address);
+  const txAddAgent = await irStorage.connect(deployer).addAgent(irAgent.address);
   await txAddAgent.wait();
 
-  const transferOwnershipIRS = await irStorage
-    .connect(deployer)
-    .transferOwnership(await trexFactory.getAddress());
+  const transferOwnershipIRS = await irStorage.connect(deployer).transferOwnership(await trexFactory.getAddress());
   await transferOwnershipIRS.wait();
 
   const addresses = {
