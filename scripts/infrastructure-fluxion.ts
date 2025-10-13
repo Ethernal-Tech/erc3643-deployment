@@ -5,7 +5,7 @@ import { writeFileSync } from "fs";
 import LockInTransferModule from "../artifacts/contracts/LockInTransferModule.sol/LockInTransferModule.json";
 
 async function main() {
-  const [deployer, _, irAgent] = await ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
 
   // OnChainID deployment
   const identityImplementation = await new ethers.ContractFactory(
@@ -33,7 +33,7 @@ async function main() {
     OnchainID.contracts.Gateway.abi,
     OnchainID.contracts.Gateway.bytecode,
     deployer
-  ).deploy(await identityFactory.getAddress(), [irAgent.address]); // anyone can be signer
+  ).deploy(await identityFactory.getAddress(), [deployer.address]); // anyone can be signer
   await gateway.waitForDeployment();
   // end of OnChainID deployment
 
@@ -427,7 +427,7 @@ async function main() {
     TRex.contracts.IdentityRegistryStorage.abi,
     await identityRegistryStorageProxy.getAddress()
   );
-  const txAddAgent = await irStorage.connect(deployer).addAgent(irAgent.address);
+  const txAddAgent = await irStorage.connect(deployer).addAgent(deployer.address);
   await txAddAgent.wait();
 
   const transferOwnershipIRS = await irStorage.connect(deployer).transferOwnership(await trexFactory.getAddress());
