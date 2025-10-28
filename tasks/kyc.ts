@@ -7,7 +7,7 @@ import addresses from "../addresses-fluxion.json";
 task("kyc", "KYC completion for a user")
   .addParam("user", "Recipient address")
   .setAction(async (taskArgs, hre) => {
-    const irAgent = (await hre.ethers.getSigners())[0]; // we use deployer as irAgent
+    const irAgent = (await hre.ethers.getSigners())[2];
     const { user } = taskArgs;
     expect(hre.ethers.isAddress(user)).to.be.true;
 
