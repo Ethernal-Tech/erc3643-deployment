@@ -32,17 +32,17 @@ task("mint-token", "Mints and unpauses a T-Rex token")
 
     const etherAmount = hre.ethers.parseEther(amount);
 
-    const tx = await compliance.callModuleFunction(
-      new hre.ethers.Interface([
-        "function batchApproveTransfers(address[], address[], uint256[])",
-      ]).encodeFunctionData("batchApproveTransfers", [
-        [hre.ethers.ZeroAddress],
-        [user],
-        [etherAmount],
-      ]),
-      addresses.conditionalTransferModule
-    );
-    await tx.wait();
+    // const tx = await compliance.callModuleFunction(
+    //   new hre.ethers.Interface([
+    //     "function batchApproveTransfers(address[], address[], uint256[])",
+    //   ]).encodeFunctionData("batchApproveTransfers", [
+    //     [hre.ethers.ZeroAddress],
+    //     [user],
+    //     [etherAmount],
+    //   ]),
+    //   addresses.conditionalTransferModule
+    // );
+    // await tx.wait();
 
     const txMint = await token.connect(tokenAgent).mint(user, etherAmount);
     await txMint.wait();

@@ -3,6 +3,7 @@ import OnchainID from "@onchain-id/solidity";
 import TRex from "@tokenysolutions/t-rex";
 import { writeFileSync } from "fs";
 import LockInTransferModule from "../artifacts/contracts/LockInTransferModule.sol/LockInTransferModule.json";
+import ConditionalTransferModule from "../artifacts/contracts/ConditionalTransferModule.sol/ConditionalTransferModule.json";
 
 async function main() {
   const [deployer, _, irAgent] = await ethers.getSigners();
@@ -163,8 +164,8 @@ async function main() {
 
   // ConditionalTransferModule
   const conditionalTransferModule = await new ethers.ContractFactory(
-    TRex.contracts.ConditionalTransferModule.abi,
-    TRex.contracts.ConditionalTransferModule.bytecode,
+    ConditionalTransferModule.abi,
+    ConditionalTransferModule.bytecode,
     deployer
   ).deploy();
   await conditionalTransferModule.waitForDeployment();
