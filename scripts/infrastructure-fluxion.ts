@@ -5,6 +5,7 @@ import { writeFileSync } from "fs";
 import LockInTransferModule from "../artifacts/contracts/LockInTransferModule.sol/LockInTransferModule.json";
 import ConditionalTransferModule from "../artifacts/contracts/ConditionalTransferModule.sol/ConditionalTransferModule.json";
 import SupplyLimitModule from "../artifacts/contracts/SupplyLimitModule.sol/SupplyLimitModule.json";
+import MaxBalanceModule from "../artifacts/contracts/MaxBalanceModule.sol/MaxBalanceModule.json";
 
 async function main() {
   const [deployer, _, irAgent] = await ethers.getSigners();
@@ -234,8 +235,8 @@ async function main() {
 
   // MaxBalanceModule
   const maxBalanceModule = await new ethers.ContractFactory(
-    TRex.contracts.MaxBalanceModule.abi,
-    TRex.contracts.MaxBalanceModule.bytecode,
+    MaxBalanceModule.abi,
+    MaxBalanceModule.bytecode,
     deployer
   ).deploy();
   await maxBalanceModule.waitForDeployment();

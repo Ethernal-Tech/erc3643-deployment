@@ -7,12 +7,12 @@ import "@tokenysolutions/t-rex/contracts/compliance/modular/IModularCompliance.s
 import "@tokenysolutions/t-rex/contracts/compliance/modular/modules/AbstractModuleUpgradeable.sol";
 
 contract SupplyLimitModule is AbstractModuleUpgradeable {
-    /// supply limits array
+    /// supply limits per modular compliance contract
     mapping(address => uint256) private _supplyLimits;
 
     /**
      *  this event is emitted when the supply limit has been set.
-     *  `_compliance` is the compliance address.
+     *  `_compliance` is the modular compliance address.
      *  `_limit` is the max amount of tokens in circulation.
      */
     event SupplyLimitSet(address _compliance, uint256 _limit);
