@@ -4,6 +4,7 @@ import TRex from "@tokenysolutions/t-rex";
 import { writeFileSync } from "fs";
 import LockInTransferModule from "../artifacts/contracts/LockInTransferModule.sol/LockInTransferModule.json";
 import ConditionalTransferModule from "../artifacts/contracts/ConditionalTransferModule.sol/ConditionalTransferModule.json";
+import SupplyLimitModule from "../artifacts/contracts/SupplyLimitModule.sol/SupplyLimitModule.json";
 
 async function main() {
   const [deployer, _, irAgent] = await ethers.getSigners();
@@ -256,8 +257,8 @@ async function main() {
 
   // SupplyLimitModule
   const supplyLimitModule = await new ethers.ContractFactory(
-    TRex.contracts.SupplyLimitModule.abi,
-    TRex.contracts.SupplyLimitModule.bytecode,
+    SupplyLimitModule.abi,
+    SupplyLimitModule.bytecode,
     deployer
   ).deploy();
   await supplyLimitModule.waitForDeployment();

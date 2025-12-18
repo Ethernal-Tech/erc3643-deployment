@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0
-// This contract is also licensed under the Creative Commons Attribution-NonCommercial 4.0 International License.
 
 pragma solidity 0.8.17;
 
