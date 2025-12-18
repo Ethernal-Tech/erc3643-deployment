@@ -219,12 +219,12 @@ contract ConditionalTransferModule is AbstractModuleUpgradeable {
     }
 
     /**
-    *  @dev checks if the given user address is an agent of token
-    *  @param compliance the Compliance smart contract to be checked
-    *  @param _userAddress ONCHAIN identity of the user
-    *  internal function, can be called only from the functions of the Compliance smart contract
-    */
-    function _isTokenAgent(address compliance, address _userAddress) internal view returns (bool) {
-        return AgentRole(IModularCompliance(compliance).getTokenBound()).isAgent(_userAddress);
+     *  @dev checks if the given user address is an agent of token
+     *  @param _compliance the Compliance smart contract to be checked
+     *  @param _userAddress ONCHAIN identity of the user
+     *  internal function, can be called only from the functions of the Compliance smart contract
+     */
+    function _isTokenAgent(address _compliance, address _userAddress) internal view returns (bool) {
+        return AgentRole(IModularCompliance(_compliance).getTokenBound()).isAgent(_userAddress);
     }
 }
