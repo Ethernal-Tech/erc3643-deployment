@@ -7,7 +7,7 @@ import "@tokenysolutions/t-rex/contracts/compliance/modular/IModularCompliance.s
 import "@tokenysolutions/t-rex/contracts/compliance/modular/modules/AbstractModuleUpgradeable.sol";
 
 contract ConditionalTransferModule is AbstractModuleUpgradeable {
-    /// Mapping between transfer details and their approval status (amount of transfers approved) per compliance
+    /// mapping between transfer details and their approval status (amount of transfers approved) per compliance
     mapping(address => mapping(bytes32 => uint)) private _transfersApproved;
 
     /**
@@ -39,7 +39,7 @@ contract ConditionalTransferModule is AbstractModuleUpgradeable {
     }
 
     /**
-    *  @dev Approves a transfer
+    *  @dev approves a transfer
     *  once a transfer is approved, the sender is allowed to execute it
     *  @param _from the address of the transfer sender
     *  @param _to the address of the transfer receiver
@@ -63,7 +63,7 @@ contract ConditionalTransferModule is AbstractModuleUpgradeable {
     *  Only a bound compliance can call this function
     *  emits an `ApprovalRemoved` event
     */
-    function unApproveTransfer(address _from, address _to, uint _amount) public onlyComplianceCall {
+    function unapproveTransfer(address _from, address _to, uint _amount) public onlyComplianceCall {
         bytes32 transferHash = calculateTransferHash(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
         require(_transfersApproved[msg.sender][transferHash] > 0, "not approved");
         _transfersApproved[msg.sender][transferHash]--;
@@ -71,10 +71,9 @@ contract ConditionalTransferModule is AbstractModuleUpgradeable {
     }
 
 /**
-    *  @dev Approves transfers in batch
+    *  @dev approves transfers in batch
     *  once a transfer is approved, the sender is allowed to execute it
-    *  IMPORTANT : THIS TRANSACTION COULD EXCEED GAS LIMIT IF `_from.length` IS TOO HIGH,
-    *  USE WITH CARE OR YOU COULD LOSE TX FEES WITH AN "OUT OF GAS" TRANSACTION
+    *  @notice the transaction could exceed gas limit if `_from.length` is too high
     *  @param _from the array of addresses of the transfer senders
     *  @param _to the array of addresses of the transfer receivers
     *  @param _amount the array of tokens amounts that `_from` would send to `_to`
@@ -92,25 +91,22 @@ contract ConditionalTransferModule is AbstractModuleUpgradeable {
     *  @dev removes approval on a transfer previously approved
     *  requires the transfer to be previously approved
     *  once a transfer approval is removed, the sender is not allowed to execute it anymore
-    *  IMPORTANT : THIS TRANSACTION COULD EXCEED GAS LIMIT IF `_from.length` IS TOO HIGH,
-    *  USE WITH CARE OR YOU COULD LOSE TX FEES WITH AN "OUT OF GAS" TRANSACTION
+    *  @notice the transaction could exceed gas limit if `_from.length` is too high
     *  @param _from the array of addresses of the transfer senders
     *  @param _to the array of addresses of the transfer receivers
     *  @param _amount the array of token amounts that `_from` were allowed to send to `_to`
     *  Only a bound compliance can call this function
     *  emits `_from.length` `ApprovalRemoved` events
     */
-    function batchUnApproveTransfers(address[] calldata _from, address[] calldata _to, uint[] calldata _amount)
+    function batchUnapproveTransfers(address[] calldata _from, address[] calldata _to, uint[] calldata _amount)
     external onlyComplianceCall {
         for (uint256 i = 0; i < _from.length; i++){
-            unApproveTransfer(_from[i], _to[i], _amount[i]);
+            unapproveTransfer(_from[i], _to[i], _amount[i]);
         }
     }
     
     /**
      *  @dev See {IModule-moduleTransferAction}.
-     *  transfer approval is removed post-transfer if it was pre-approved
-     *  the check on whether the transfer was pre-approved or not here is to allow forced transfers to bypass the module
      */
     function moduleTransferAction(
         address _from,
@@ -118,6 +114,7 @@ contract ConditionalTransferModule is AbstractModuleUpgradeable {
         uint256 _value)
     external override onlyComplianceCall {
         bytes32 transferHash = calculateTransferHash(_from, _to, _value, IModularCompliance(msg.sender).getTokenBound());
+        // if the transfer was approved, remove the approval. otherwise do nothing (to allow forced transfers)
         if(_transfersApproved[msg.sender][transferHash] > 0) {
             _transfersApproved[msg.sender][transferHash]--;
             emit ApprovalRemoved(_from, _to, _value, IModularCompliance(msg.sender).getTokenBound());
@@ -140,7 +137,6 @@ contract ConditionalTransferModule is AbstractModuleUpgradeable {
 
     /**
      *  @dev See {IModule-moduleCheck}.
-     *  checks if the transfer is approved or not
      */
     function moduleCheck(
         address _from,
