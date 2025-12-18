@@ -14,9 +14,9 @@ contract ConditionalTransferModule is AbstractModuleUpgradeable {
      *  this event is emitted whenever a transfer is approved.
      *  the event is emitted by 'approveTransfer' function.
      *  `_from` is the address of transfer sender.
-     *  `_to` is the address of transfer recipient
-     *  `_amount` is the token amount to be sent (take care of decimals)
-     *  `_token` is the token address of the token concerned by the approval
+     *  `_to` is the address of transfer recipient.
+     *  `_amount` is the token amount to be sent.
+     *  `_token` is address of the token taking part in the transfer.
      */
     event TransferApproved(address _from, address _to, uint _amount, address _token);
 
@@ -24,9 +24,9 @@ contract ConditionalTransferModule is AbstractModuleUpgradeable {
      *  this event is emitted whenever a transfer approval is removed.
      *  the event is emitted by 'unApproveTransfer' function.
      *  `_from` is the address of transfer sender.
-     *  `_to` is the address of transfer recipient
-     *  `_amount` is the token amount to be sent (take care of decimals)
-     *  `_token` is the token address of the token concerned by the approval
+     *  `_to` is the address of transfer recipient.
+     *  `_amount` is the token amount to be sent.
+     *  `_token` is address of the token taking part in the transfer.
      */
     event ApprovalRemoved(address _from, address _to, uint _amount, address _token);
 
