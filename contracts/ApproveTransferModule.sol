@@ -140,7 +140,7 @@ contract ApproveTransferModule is AbstractModuleUpgradeable {
         uint256 _value,
         address _compliance
     ) external view override returns (bool) {
-        if (_from == address(0) || _isTokenAgent(_compliance, _from)) {
+        if (_from == address(0) || _isTokenOwner(_compliance, _from)) {
             return true;
         }
 
@@ -211,12 +211,12 @@ contract ApproveTransferModule is AbstractModuleUpgradeable {
     }
 
     /**
-     *  @dev checks if the given user address is an agent of token
+     *  @dev checks if the given address is a token owner
      *  @param _compliance the modular compliance address
-     *  @param _userAddress user address to be checked
-     *  @return true if the `_userAddress` is an agent of the token bound
+     *  @param _address user address to be checked
+     *  @return true if the `_address` is the token owner
      */
-    function _isTokenAgent(address _compliance, address _userAddress) internal view returns (bool) {
-        return AgentRole(IModularCompliance(_compliance).getTokenBound()).isAgent(_userAddress);
+    function _isTokenOwner(address _compliance, address _address) internal view returns (bool) {
+        return Ownable(IModularCompliance(_compliance).getTokenBound()).owner() == _address;
     }
 }
