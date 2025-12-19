@@ -2,10 +2,12 @@ import { ethers } from "hardhat";
 import OnchainID from "@onchain-id/solidity";
 import TRex from "@tokenysolutions/t-rex";
 import { writeFileSync } from "fs";
-import LockInTransferModule from "../artifacts/contracts/LockInTransferModule.sol/LockInTransferModule.json";
-import ConditionalTransferModule from "../artifacts/contracts/ConditionalTransferModule.sol/ConditionalTransferModule.json";
-import SupplyLimitModule from "../artifacts/contracts/SupplyLimitModule.sol/SupplyLimitModule.json";
+import ApproveTransferModule from "../artifacts/contracts/ApproveTransferModule.sol/ApproveTransferModule.json";
+import CountryPermitModule from "../artifacts/contracts/CountryPermitModule.sol/CountryPermitModule.json";
+import CountryRestrictModule from "../artifacts/contracts/CountryRestrictModule.sol/CountryRestrictModule.json";
 import MaxBalanceModule from "../artifacts/contracts/MaxBalanceModule.sol/MaxBalanceModule.json";
+import MaxTotalSupplyModule from "../artifacts/contracts/MaxTotalSupplyModule.sol/MaxTotalSupplyModule.json";
+import LockInTransferModule from "../artifacts/contracts/LockInTransferModule.sol/LockInTransferModule.json";
 
 async function main() {
   const [deployer, _, irAgent] = await ethers.getSigners();
@@ -142,55 +144,55 @@ async function main() {
   // TREXGateway contains trexFactory; trexFactory contains idFactory, token; token contains MC, IR; IR contains IRS, TIR, CTR
   // Gateway is for users identity creation
 
-  const countryAllowModule = await new ethers.ContractFactory(
-    TRex.contracts.CountryAllowModule.abi,
-    TRex.contracts.CountryAllowModule.bytecode,
+  // ApproveTransferModule
+  const approveTransferModule = await new ethers.ContractFactory(
+    ApproveTransferModule.abi,
+    ApproveTransferModule.bytecode,
     deployer
   ).deploy();
-  await countryAllowModule.waitForDeployment();
+  await approveTransferModule.waitForDeployment();
 
-  const countryAllowModuleProxy = await new ethers.ContractFactory(
+  const approveTransferModuleProxy = await new ethers.ContractFactory(
     TRex.contracts.ModuleProxy.abi,
     TRex.contracts.ModuleProxy.bytecode,
     deployer
   ).deploy(
-    await countryAllowModule.getAddress(),
-    countryAllowModule.interface.encodeFunctionData("initialize")
+    await approveTransferModule.getAddress(),
+    approveTransferModule.interface.encodeFunctionData("initialize")
   );
-  await countryAllowModuleProxy.waitForDeployment();
+  await approveTransferModuleProxy.waitForDeployment();
 
   console.log(
-    "Country Allow Module Proxy ->",
-    await countryAllowModuleProxy.getAddress()
+    "Approve Transfer Module Proxy ->",
+    await approveTransferModuleProxy.getAddress()
   );
 
-  // ConditionalTransferModule
-  const conditionalTransferModule = await new ethers.ContractFactory(
-    ConditionalTransferModule.abi,
-    ConditionalTransferModule.bytecode,
+  const countryPermitModule = await new ethers.ContractFactory(
+    CountryPermitModule.abi,
+    CountryPermitModule.bytecode,
     deployer
   ).deploy();
-  await conditionalTransferModule.waitForDeployment();
+  await countryPermitModule.waitForDeployment();
 
-  const conditionalTransferModuleProxy = await new ethers.ContractFactory(
+  const countryPermitModuleProxy = await new ethers.ContractFactory(
     TRex.contracts.ModuleProxy.abi,
     TRex.contracts.ModuleProxy.bytecode,
     deployer
   ).deploy(
-    await conditionalTransferModule.getAddress(),
-    conditionalTransferModule.interface.encodeFunctionData("initialize")
+    await countryPermitModule.getAddress(),
+    countryPermitModule.interface.encodeFunctionData("initialize")
   );
-  await conditionalTransferModuleProxy.waitForDeployment();
+  await countryPermitModuleProxy.waitForDeployment();
 
   console.log(
-    "Conditional Transfer Module Proxy ->",
-    await conditionalTransferModuleProxy.getAddress()
+    "Country Permit Module Proxy ->",
+    await countryPermitModuleProxy.getAddress()
   );
 
   // CountryRestrictModule
   const countryRestrictModule = await new ethers.ContractFactory(
-    TRex.contracts.CountryRestrictModule.abi,
-    TRex.contracts.CountryRestrictModule.bytecode,
+    CountryRestrictModule.abi,
+    CountryRestrictModule.bytecode,
     deployer
   ).deploy();
   await countryRestrictModule.waitForDeployment();
@@ -208,29 +210,6 @@ async function main() {
   console.log(
     "Country Restrict Module Proxy ->",
     await countryRestrictModuleProxy.getAddress()
-  );
-
-  // ExchangeMonthlyLimitsModule
-  const exchangeMonthlyLimitsModule = await new ethers.ContractFactory(
-    TRex.contracts.ExchangeMonthlyLimitsModule.abi,
-    TRex.contracts.ExchangeMonthlyLimitsModule.bytecode,
-    deployer
-  ).deploy();
-  await exchangeMonthlyLimitsModule.waitForDeployment();
-
-  const exchangeMonthlyLimitsModuleProxy = await new ethers.ContractFactory(
-    TRex.contracts.ModuleProxy.abi,
-    TRex.contracts.ModuleProxy.bytecode,
-    deployer
-  ).deploy(
-    await exchangeMonthlyLimitsModule.getAddress(),
-    exchangeMonthlyLimitsModule.interface.encodeFunctionData("initialize")
-  );
-  await exchangeMonthlyLimitsModuleProxy.waitForDeployment();
-
-  console.log(
-    "Exchange Monthly Limits Module Proxy ->",
-    await exchangeMonthlyLimitsModuleProxy.getAddress()
   );
 
   // MaxBalanceModule
@@ -256,142 +235,27 @@ async function main() {
     await maxBalanceModuleProxy.getAddress()
   );
 
-  // SupplyLimitModule
-  const supplyLimitModule = await new ethers.ContractFactory(
-    SupplyLimitModule.abi,
-    SupplyLimitModule.bytecode,
+  // MaxTotalSupplyModule
+  const maxTotalSupplyModule = await new ethers.ContractFactory(
+    MaxTotalSupplyModule.abi,
+    MaxTotalSupplyModule.bytecode,
     deployer
   ).deploy();
-  await supplyLimitModule.waitForDeployment();
+  await maxTotalSupplyModule.waitForDeployment();
 
-  const supplyLimitModuleProxy = await new ethers.ContractFactory(
+  const maxTotalSupplyModuleProxy = await new ethers.ContractFactory(
     TRex.contracts.ModuleProxy.abi,
     TRex.contracts.ModuleProxy.bytecode,
     deployer
   ).deploy(
-    await supplyLimitModule.getAddress(),
-    supplyLimitModule.interface.encodeFunctionData("initialize")
+    await maxTotalSupplyModule.getAddress(),
+    maxTotalSupplyModule.interface.encodeFunctionData("initialize")
   );
-  await supplyLimitModuleProxy.waitForDeployment();
+  await maxTotalSupplyModuleProxy.waitForDeployment();
 
   console.log(
-    "Supply Limit Module Proxy ->",
-    await supplyLimitModuleProxy.getAddress()
-  );
-
-  // TimeExchangeLimitsModule
-  const timeExchangeLimitsModule = await new ethers.ContractFactory(
-    TRex.contracts.TimeExchangeLimitsModule.abi,
-    TRex.contracts.TimeExchangeLimitsModule.bytecode,
-    deployer
-  ).deploy();
-  await timeExchangeLimitsModule.waitForDeployment();
-
-  const timeExchangeLimitsModuleProxy = await new ethers.ContractFactory(
-    TRex.contracts.ModuleProxy.abi,
-    TRex.contracts.ModuleProxy.bytecode,
-    deployer
-  ).deploy(
-    await timeExchangeLimitsModule.getAddress(),
-    timeExchangeLimitsModule.interface.encodeFunctionData("initialize")
-  );
-  await timeExchangeLimitsModuleProxy.waitForDeployment();
-
-  console.log(
-    "Time Exchange Limits Module Proxy ->",
-    await timeExchangeLimitsModuleProxy.getAddress()
-  );
-
-  // TimeTransfersLimitsModule
-  const timeTransfersLimitsModule = await new ethers.ContractFactory(
-    TRex.contracts.TimeTransfersLimitsModule.abi,
-    TRex.contracts.TimeTransfersLimitsModule.bytecode,
-    deployer
-  ).deploy();
-  await timeTransfersLimitsModule.waitForDeployment();
-
-  const timeTransfersLimitsModuleProxy = await new ethers.ContractFactory(
-    TRex.contracts.ModuleProxy.abi,
-    TRex.contracts.ModuleProxy.bytecode,
-    deployer
-  ).deploy(
-    await timeTransfersLimitsModule.getAddress(),
-    timeTransfersLimitsModule.interface.encodeFunctionData("initialize")
-  );
-  await timeTransfersLimitsModuleProxy.waitForDeployment();
-
-  console.log(
-    "Time Transfers Limits Module Proxy ->",
-    await timeTransfersLimitsModuleProxy.getAddress()
-  );
-
-  // TokenListingRestrictionsModule
-  const tokenListingRestrictionsModule = await new ethers.ContractFactory(
-    TRex.contracts.TokenListingRestrictionsModule.abi,
-    TRex.contracts.TokenListingRestrictionsModule.bytecode,
-    deployer
-  ).deploy();
-  await tokenListingRestrictionsModule.waitForDeployment();
-
-  const tokenListingRestrictionsModuleProxy = await new ethers.ContractFactory(
-    TRex.contracts.ModuleProxy.abi,
-    TRex.contracts.ModuleProxy.bytecode,
-    deployer
-  ).deploy(
-    await tokenListingRestrictionsModule.getAddress(),
-    tokenListingRestrictionsModule.interface.encodeFunctionData("initialize")
-  );
-  await tokenListingRestrictionsModuleProxy.waitForDeployment();
-
-  console.log(
-    "Token Listing Restrictions Module Proxy ->",
-    await tokenListingRestrictionsModuleProxy.getAddress()
-  );
-
-  // TransferFeesModules
-  const transferFeesModules = await new ethers.ContractFactory(
-    TRex.contracts.TransferFeesModule.abi,
-    TRex.contracts.TransferFeesModule.bytecode,
-    deployer
-  ).deploy();
-  await transferFeesModules.waitForDeployment();
-
-  const transferFeesModulesProxy = await new ethers.ContractFactory(
-    TRex.contracts.ModuleProxy.abi,
-    TRex.contracts.ModuleProxy.bytecode,
-    deployer
-  ).deploy(
-    await transferFeesModules.getAddress(),
-    transferFeesModules.interface.encodeFunctionData("initialize")
-  );
-  await transferFeesModulesProxy.waitForDeployment();
-
-  console.log(
-    "Transfer Fees Modules Proxy ->",
-    await transferFeesModulesProxy.getAddress()
-  );
-
-  // TransferRestrictModule
-  const transferRestrictModule = await new ethers.ContractFactory(
-    TRex.contracts.TransferRestrictModule.abi,
-    TRex.contracts.TransferRestrictModule.bytecode,
-    deployer
-  ).deploy();
-  await transferRestrictModule.waitForDeployment();
-
-  const transferRestrictModuleProxy = await new ethers.ContractFactory(
-    TRex.contracts.ModuleProxy.abi,
-    TRex.contracts.ModuleProxy.bytecode,
-    deployer
-  ).deploy(
-    await transferRestrictModule.getAddress(),
-    transferRestrictModule.interface.encodeFunctionData("initialize")
-  );
-  await transferRestrictModuleProxy.waitForDeployment();
-
-  console.log(
-    "Transfer Restrict Module Proxy ->",
-    await transferRestrictModuleProxy.getAddress()
+    "Max Total Supply Module Proxy ->",
+    await maxTotalSupplyModuleProxy.getAddress()
   );
 
   // LockInTransferModule
@@ -440,17 +304,11 @@ async function main() {
     trexGateway: await trexGateway.getAddress(),
     gateway: await gateway.getAddress(),
     identityRegistryStorage: await identityRegistryStorageProxy.getAddress(),
-    countryAllowModule: await countryAllowModuleProxy.getAddress(),
-    conditionalTransferModule: await conditionalTransferModuleProxy.getAddress(),
+    approveTransferModule: await approveTransferModuleProxy.getAddress(),
+    countryPermitModule: await countryPermitModuleProxy.getAddress(),
     countryRestrictModule: await countryRestrictModuleProxy.getAddress(),
-    exchangeMonthlyLimitsModule: await exchangeMonthlyLimitsModuleProxy.getAddress(),
     maxBalanceModule: await maxBalanceModuleProxy.getAddress(),
-    supplyLimitModule: await supplyLimitModuleProxy.getAddress(),
-    timeExchangeLimitsModule: await timeExchangeLimitsModuleProxy.getAddress(),
-    timeTransfersLimitsModule: await timeTransfersLimitsModuleProxy.getAddress(),
-    transferFeesModules: await transferFeesModulesProxy.getAddress(),
-    transferRestrictModule: await transferRestrictModuleProxy.getAddress(),
-    tokenListingRestrictionsModule: await tokenListingRestrictionsModuleProxy.getAddress(),
+    maxTotalSupplyModule: await maxTotalSupplyModuleProxy.getAddress(),
     lockInTransferModule: await lockInTransferModuleProxy.getAddress(),
   };
 
