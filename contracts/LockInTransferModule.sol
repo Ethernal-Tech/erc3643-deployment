@@ -143,7 +143,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      *  @dev reset queue
      *  @param _queue the queue to be reset
      */
-    function _resetQueue(Queue storage _queue) internal {
+    function _resetQueue(Queue storage _queue) private {
         _queue.start = 0;
         _queue.end = 0;
     }
@@ -158,7 +158,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         address _compliance,
         address _receiver,
         uint256 _amount
-    ) internal {
+    ) private {
         if (_receiver == address(0)) {
             return;
         }
@@ -179,7 +179,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         address _compliance,
         address _sender,
         uint256 _amount
-    ) internal {
+    ) private {
         if (_sender == address(0)) {
             return;
         }
