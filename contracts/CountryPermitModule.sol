@@ -32,7 +32,7 @@ contract CountryPermitModule is AbstractCountryModule {
      *  emits a `CountryPermitted` event
      *  @param _country ISO 3166-1 numeric standard code of the country to be permitted
      */
-    function permitCountry(uint16 _country) external onlyComplianceCall {
+    function permitCountry(uint16 _country) public onlyComplianceCall {
         _setCountryStatus(msg.sender, _country, true);
         emit CountryPermitted(msg.sender, _country);
     }
@@ -43,7 +43,7 @@ contract CountryPermitModule is AbstractCountryModule {
      *  emits a `CountryPermissionRemoved` event
      *  @param _country ISO 3166-1 numeric standard code of the country whose permission is to be removed
      */
-    function removeCountryPermission(uint16 _country) external onlyComplianceCall {
+    function removeCountryPermission(uint16 _country) public onlyComplianceCall {
         _setCountryStatus(msg.sender, _country, false);
         emit CountryPermissionRemoved(msg.sender, _country);
     }
@@ -57,11 +57,10 @@ contract CountryPermitModule is AbstractCountryModule {
      */
     function setCountriesPermission(uint16[] calldata _countries, bool[] calldata _permissions) external onlyComplianceCall {
         for (uint256 i = 0; i < _countries.length; i++) {
-            _setCountryStatus(msg.sender, _countries[i], _permissions[i]);
             if (_permissions[i]) {
-                emit CountryPermitted(msg.sender, _countries[i]);
+                permitCountry(_countries[i]);
             } else {
-                emit CountryPermissionRemoved(msg.sender, _countries[i]);
+                removeCountryPermission(_countries[i]);
             }
         }
     }

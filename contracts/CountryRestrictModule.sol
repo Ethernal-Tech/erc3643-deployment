@@ -32,7 +32,7 @@ contract CountryRestrictModule is AbstractCountryModule {
      *  emits a `CountryRestricted` event
      *  @param _country ISO 3166-1 numeric standard code of the country to be restricted
      */
-    function restrictCountry(uint16 _country) external onlyComplianceCall {
+    function restrictCountry(uint16 _country) public onlyComplianceCall {
         _setCountryStatus(msg.sender, _country, true);
         emit CountryRestricted(msg.sender, _country);
     }
@@ -43,7 +43,7 @@ contract CountryRestrictModule is AbstractCountryModule {
      *  emits a `CountryRestrictionRemoved` event
      *  @param _country ISO 3166-1 numeric standard code of the country whose restriction is to be removed
      */
-    function removeCountryRestriction(uint16 _country) external onlyComplianceCall {
+    function removeCountryRestriction(uint16 _country) public onlyComplianceCall {
         _setCountryStatus(msg.sender, _country, false);
         emit CountryRestrictionRemoved(msg.sender, _country);
     }
@@ -57,11 +57,10 @@ contract CountryRestrictModule is AbstractCountryModule {
      */
     function setCountriesRestriction(uint16[] calldata _countries, bool[] calldata _restrictions) external onlyComplianceCall {
         for (uint256 i = 0; i < _countries.length; i++) {
-            _setCountryStatus(msg.sender, _countries[i], _restrictions[i]);
             if (_restrictions[i]) {
-                emit CountryRestricted(msg.sender, _countries[i]);
+                restrictCountry(_countries[i]);
             } else {
-                emit CountryRestrictionRemoved(msg.sender, _countries[i]);
+                removeCountryRestriction(_countries[i]);
             }
         }
     }
