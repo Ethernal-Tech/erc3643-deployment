@@ -28,7 +28,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
     /**
      *  this event is emitted when the wait period has been set.
      *  the event is emitted by 'setWaitPeriod' function.
-     *  `_compliance` is the compliance address.
+     *  `_compliance` is the modular compliance contract address.
      *  `_value` is the wait period in blocks.
      */
     event WaitPeriod(address _compliance, uint256 _value);
@@ -43,6 +43,8 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
 
     /**
      *  @dev set wait period for a compliance contract
+     *  only a bound modular compliance contract can call this function
+     *  emits a `WaitPeriod` event
      *  @param _waitPeriod the wait period in blocks
      */
     function setWaitPeriod(uint256 _waitPeriod) external onlyComplianceCall {
@@ -52,7 +54,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
 
     /**
      *  @dev See {IModule-moduleTransferAction}.
-     *  add transfer limit for receiver and remove transfer limit for sender
+     *  adds transfer limit for receiver and remove transfer limit for sender
      */
     function moduleTransferAction(
         address _from,
@@ -140,7 +142,6 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
     /**
      *  @dev reset queue
      *  @param _queue the queue to be reset
-     *  internal function, can be called only from the functions of the Compliance smart contract
      */
     function _resetQueue(Queue storage _queue) internal {
         _queue.start = 0;
@@ -149,13 +150,12 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
 
     /**
      *  @dev enqueue transfer limit for a receiver
-     *  @param _token the Compliance smart contract to be checked
-     *  @param _receiver the address of the receiver
+     *  @param _compliance compliance contract address
+     *  @param _receiver receiver address
      *  @param _amount the amount to be enqueued
-     *  internal function, can be called only from the functions of the Compliance smart contract
      */
     function _enqueueTransferLimit(
-        address _token,
+        address _compliance,
         address _receiver,
         uint256 _amount
     ) internal {
@@ -163,21 +163,20 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
             return;
         }
 
-        Queue storage queue = _transferLimits[_token][_receiver];
-        queue.items[queue.end] = TransferLimit(_amount, block.number + _waitPeriods[_token]);
+        Queue storage queue = _transferLimits[_compliance][_receiver];
+        queue.items[queue.end] = TransferLimit(_amount, block.number + _waitPeriods[_compliance]);
         queue.end++;
         queue.balance += _amount;
     }
 
     /**
      *  @dev dequeue transfer limit for a sender
-     *  @param _token the Compliance smart contract to be checked
-     *  @param _sender the address of the sender
+     *  @param _compliance compliance contract address
+     *  @param _sender sender address
      *  @param _amount the amount to be dequeued
-     *  internal function, can be called only from the functions of the Compliance smart contract
      */
     function _dequeueTransferLimit(
-        address _token,
+        address _compliance,
         address _sender,
         uint256 _amount
     ) internal {
@@ -185,7 +184,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
             return;
         }
 
-        Queue storage queue = _transferLimits[_token][_sender];
+        Queue storage queue = _transferLimits[_compliance][_sender];
         bool doResetQueue = true;
         for (uint256 i = queue.start; i < queue.end; i++) {
             if (queue.items[i].untilBlock >= block.number) {
