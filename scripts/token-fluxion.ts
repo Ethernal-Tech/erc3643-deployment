@@ -34,17 +34,17 @@ async function main() {
       irAgents: [irAgent.address],
       tokenAgents: [tokenAgent.address],
       complianceModules: [
-        addresses.countryAllowModule,
+        addresses.countryPermitModule,
         addresses.maxBalanceModule,
-        addresses.conditionalTransferModule,
+        addresses.approveTransferModule,
       ],
       complianceSettings: [
         new ethers.Interface([
-          "function batchAllowCountries(uint16[])",
-        ]).encodeFunctionData("batchAllowCountries", [[688]]),
+          "function setCountriesPermission(uint16[], bool[])",
+        ]).encodeFunctionData("setCountriesPermission", [[688], [true]]),
         new ethers.Interface([
           "function setMaxBalance(uint256)",
-        ]).encodeFunctionData("setMaxBalance", [ethers.parseEther("1000000")]),
+        ]).encodeFunctionData("setMaxBalance", [ethers.parseEther("1")]),
       ],
     },
     {
@@ -54,6 +54,7 @@ async function main() {
     }
   );
   const receipt = await txDeployTREX.wait();
+  console.log("receipt status -> %d", receipt.status)
 
   const trexSuiteDeployed = await trexFactory.queryFilter(
     trexFactory.filters.TREXSuiteDeployed(),
