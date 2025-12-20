@@ -28,7 +28,15 @@ contract ApproveTransferModule is AbstractModuleUpgradeable {
      *  `_amount` is the token amount to be sent.
      *  `_token` is address of the token taking part in the transfer.
      */
-    event ApprovalRemoved(address _from, address _to, uint _amount, address _token);
+    event TransferApprovalRemoved(address _from, address _to, uint _amount, address _token);
+
+    /**
+     *  @dev error thrown when a transfer is not approved
+     *  @param _from address of the transfer sender
+     *  @param _to address of the transfer recipient
+     *  @param _amount token amount to be sent
+     */
+    error TransferNotApproved(address _from, address _to, uint _amount);
 
     /**
      * @dev initializes the contract and sets the initial state.
@@ -47,7 +55,7 @@ contract ApproveTransferModule is AbstractModuleUpgradeable {
      *  @param _amount the amount of tokens that `_from` would send to `_to`
      */
     function approveTransfer(address _from, address _to, uint _amount) public onlyComplianceCall {
-        bytes32 transferHash = calculateTransferHash(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
+        bytes32 transferHash = _computeTransferHash(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
         _approvedTransfers[msg.sender][transferHash]++;
         emit TransferApproved(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
     }
@@ -56,16 +64,18 @@ contract ApproveTransferModule is AbstractModuleUpgradeable {
      *  @dev removes approval on a transfer previously approved
      *  requires the transfer to be previously approved
      *  only a bound modular compliance contract can call this function
-     *  emits an `ApprovalRemoved` event
+     *  emits an `TransferApprovalRemoved` event
      *  @param _from the address of the transfer sender
      *  @param _to the address of the transfer receiver
      *  @param _amount the amount of tokens that `_from` was allowed to send to `_to`
      */
     function unapproveTransfer(address _from, address _to, uint _amount) public onlyComplianceCall {
-        bytes32 transferHash = calculateTransferHash(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
-        require(_approvedTransfers[msg.sender][transferHash] > 0, "not approved");
+        bytes32 transferHash = _computeTransferHash(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
+        if (_approvedTransfers[msg.sender][transferHash] == 0) {
+            revert TransferNotApproved(_from, _to, _amount);
+        }
         _approvedTransfers[msg.sender][transferHash]--;
-        emit ApprovalRemoved(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
+        emit TransferApprovalRemoved(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
     }
 
     /**
@@ -88,7 +98,7 @@ contract ApproveTransferModule is AbstractModuleUpgradeable {
      *  @dev removes approval transfers in batch
      *  requires all transfers in the batch to be previously approved
      *  only a bound modular compliance contract can call this function
-     *  emits `_from.length` `ApprovalRemoved` events
+     *  emits `_from.length` `TransferApprovalRemoved` events
      *  @param _from the array of addresses of the transfer senders
      *  @param _to the array of addresses of the transfer receivers
      *  @param _amount the array of token amounts that `_from` were allowed to send to `_to`
@@ -109,11 +119,11 @@ contract ApproveTransferModule is AbstractModuleUpgradeable {
         address _to,
         uint256 _value)
     external override onlyComplianceCall {
-        bytes32 transferHash = calculateTransferHash(_from, _to, _value, IModularCompliance(msg.sender).getTokenBound());
+        bytes32 transferHash = _computeTransferHash(_from, _to, _value, IModularCompliance(msg.sender).getTokenBound());
         // if the transfer was approved, remove the approval. otherwise do nothing (to allow forced transfers)
         if(_approvedTransfers[msg.sender][transferHash] > 0) {
             _approvedTransfers[msg.sender][transferHash]--;
-            emit ApprovalRemoved(_from, _to, _value, IModularCompliance(msg.sender).getTokenBound());
+            emit TransferApprovalRemoved(_from, _to, _value, IModularCompliance(msg.sender).getTokenBound());
         }
     }
 
@@ -144,8 +154,8 @@ contract ApproveTransferModule is AbstractModuleUpgradeable {
             return true;
         }
 
-        bytes32 transferHash = calculateTransferHash(_from, _to, _value, IModularCompliance(_compliance).getTokenBound());
-        return isTransferApproved(_compliance, transferHash);
+        bytes32 transferHash = _computeTransferHash(_from, _to, _value, IModularCompliance(_compliance).getTokenBound());
+        return _isTransferApproved(_compliance, transferHash);
     }
 
     /**
@@ -170,21 +180,20 @@ contract ApproveTransferModule is AbstractModuleUpgradeable {
     }
 
     /**
-     *  @dev calculates the hash of transfer details
-     *  @param _from the address of the transfer sender
-     *  @param _to the address of the transfer receiver
-     *  @param _amount the amount of tokens that `_from` would send to `_to`
-     *  @param _token the address of the token that would be transferred
+     *  @dev computes transfer details hash
+     *  @param _from address of the transfer sender
+     *  @param _to address of the transfer receiver
+     *  @param _amount amount of tokens for transfer
+     *  @param _token address of the token involved in the transfer
      *  @return bytes32 hash of the transfer details
      */
-    function calculateTransferHash (
+    function _computeTransferHash (
         address _from,
         address _to,
         uint _amount,
         address _token
-    ) public pure returns (bytes32){
-        bytes32 transferHash = keccak256(abi.encode(_from, _to, _amount, _token));
-        return transferHash;
+    ) internal pure returns (bytes32){
+        return keccak256(abi.encode(_from, _to, _amount, _token));
     }
 
     /**
@@ -193,21 +202,11 @@ contract ApproveTransferModule is AbstractModuleUpgradeable {
      *  @param _transferHash, bytes corresponding to the transfer details, hashed
      *  @return true if the transfer is approved
      */
-    function isTransferApproved(address _compliance, bytes32 _transferHash) public view returns (bool) {
+    function _isTransferApproved(address _compliance, bytes32 _transferHash) internal view returns (bool) {
         if (((_approvedTransfers[_compliance])[_transferHash]) > 0) {
             return true;
         }
         return false;
-    }
-
-    /**
-     *  @dev gets number of approved identical transfers
-     *  @param _compliance the modular compliance address
-     *  @param _transferHash, bytes corresponding to the transfer details, hashed
-     *  @return number of approved identical transfers
-     */
-    function getTransferApprovals(address _compliance, bytes32 _transferHash) public view returns (uint) {
-        return (_approvedTransfers[_compliance])[_transferHash];
     }
 
     /**

@@ -34,7 +34,7 @@ contract MaxTotalSupplyModule is AbstractModuleUpgradeable {
      */
     function setMaxTotalSupply(uint256 _limit) external onlyComplianceCall {
         if (_limit < IToken(IModularCompliance(msg.sender).getTokenBound()).totalSupply()) {
-            revert("SupplyLimitModule: limit lower than total supply");
+            revert("new max total supply lower than current total supply");
         }
         _maxTotalSupplies[msg.sender] = _limit;
         emit MaxTotalSupplySet(msg.sender, _limit);
