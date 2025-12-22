@@ -2,12 +2,12 @@ import { ethers } from "hardhat";
 import OnchainID from "@onchain-id/solidity";
 import TRex from "@tokenysolutions/t-rex";
 import { writeFileSync } from "fs";
-import ApproveTransferModule from "../artifacts/contracts/ApproveTransferModule.sol/ApproveTransferModule.json";
-import CountryPermitModule from "../artifacts/contracts/CountryPermitModule.sol/CountryPermitModule.json";
-import CountryRestrictModule from "../artifacts/contracts/CountryRestrictModule.sol/CountryRestrictModule.json";
-import MaxBalanceModule from "../artifacts/contracts/MaxBalanceModule.sol/MaxBalanceModule.json";
-import MaxTotalSupplyModule from "../artifacts/contracts/MaxTotalSupplyModule.sol/MaxTotalSupplyModule.json";
-import LockInTransferModule from "../artifacts/contracts/LockInTransferModule.sol/LockInTransferModule.json";
+import ApproveTransferModule from "../artifacts/contracts/compliance/ApproveTransferModule.sol/ApproveTransferModule.json";
+import CountryPermitModule from "../artifacts/contracts/compliance/CountryPermitModule.sol/CountryPermitModule.json";
+import CountryRestrictModule from "../artifacts/contracts/compliance/CountryRestrictModule.sol/CountryRestrictModule.json";
+import MaxBalanceModule from "../artifacts/contracts/compliance/MaxBalanceModule.sol/MaxBalanceModule.json";
+import MaxTotalSupplyModule from "../artifacts/contracts/compliance/MaxTotalSupplyModule.sol/MaxTotalSupplyModule.json";
+import LockInTransferModule from "../artifacts/contracts/compliance/LockInTransferModule.sol/LockInTransferModule.json";
 
 async function main() {
   const [deployer, _, irAgent] = await ethers.getSigners();
