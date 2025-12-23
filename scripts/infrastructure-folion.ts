@@ -2,12 +2,14 @@ import { ethers } from "hardhat";
 import OnchainID from "@onchain-id/solidity";
 import TRex from "@tokenysolutions/t-rex";
 import { writeFileSync } from "fs";
+import TransparentUpgradeableProxy from "@openzeppelin/contracts/build/contracts/TransparentUpgradeableProxy.json";
 import ApproveTransferModule from "../artifacts/contracts/compliance/ApproveTransferModule.sol/ApproveTransferModule.json";
 import CountryPermitModule from "../artifacts/contracts/compliance/CountryPermitModule.sol/CountryPermitModule.json";
 import CountryRestrictModule from "../artifacts/contracts/compliance/CountryRestrictModule.sol/CountryRestrictModule.json";
 import MaxBalanceModule from "../artifacts/contracts/compliance/MaxBalanceModule.sol/MaxBalanceModule.json";
 import MaxTotalSupplyModule from "../artifacts/contracts/compliance/MaxTotalSupplyModule.sol/MaxTotalSupplyModule.json";
 import LockInTransferModule from "../artifacts/contracts/compliance/LockInTransferModule.sol/LockInTransferModule.json";
+import MarketplaceManager from "../artifacts/contracts/marketplace/MarketplaceManager.sol/MarketplaceManager.json";
 
 async function main() {
   const [deployer, _, irAgent] = await ethers.getSigners();
@@ -281,6 +283,30 @@ async function main() {
     await lockInTransferModuleProxy.getAddress()
   );
 
+  // MarketplaceManager
+  const marketplaceManager = await new ethers.ContractFactory(
+    MarketplaceManager.abi,
+    MarketplaceManager.bytecode,
+    deployer
+  ).deploy();
+  await marketplaceManager.waitForDeployment();
+
+  const marketplaceManagerProxy = await new ethers.ContractFactory(
+    TransparentUpgradeableProxy.abi,
+    TransparentUpgradeableProxy.bytecode,
+    deployer
+  ).deploy(
+    await marketplaceManager.getAddress(),
+    deployer.address,
+    marketplaceManager.interface.encodeFunctionData("initialize")
+  );
+  await marketplaceManagerProxy.waitForDeployment();
+
+  console.log(
+    "Marketplace Manager Proxy ->",
+    await marketplaceManagerProxy.getAddress()
+  );
+
   const identityRegistryStorageProxy = await new ethers.ContractFactory(
     TRex.contracts.IdentityRegistryStorageProxy.abi,
     TRex.contracts.IdentityRegistryStorageProxy.bytecode,
@@ -310,6 +336,7 @@ async function main() {
     maxBalanceModule: await maxBalanceModuleProxy.getAddress(),
     maxTotalSupplyModule: await maxTotalSupplyModuleProxy.getAddress(),
     lockInTransferModule: await lockInTransferModuleProxy.getAddress(),
+    marketplaceManager: await marketplaceManagerProxy.getAddress(),
   };
 
   writeFileSync("addresses-folion.json", JSON.stringify(addresses, null, 2));
