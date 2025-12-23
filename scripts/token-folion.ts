@@ -32,7 +32,7 @@ async function main() {
       irs: addresses.identityRegistryStorage, // if irs address is passed then all users from that irs will be reused (multiple tokens case)
       ONCHAINID: ethers.ZeroAddress,
       irAgents: [irAgent.address],
-      tokenAgents: [tokenAgent.address],
+      tokenAgents: [tokenAgent.address, addresses.marketplaceManager],
       complianceModules: [
         addresses.countryPermitModule,
         addresses.maxBalanceModule,
