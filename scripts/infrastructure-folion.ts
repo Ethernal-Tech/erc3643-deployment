@@ -12,7 +12,8 @@ import LockInTransferModule from "../artifacts/contracts/compliance/LockInTransf
 import MarketplaceManager from "../artifacts/contracts/marketplace/MarketplaceManager.sol/MarketplaceManager.json";
 
 async function main() {
-  const [deployer, _, irAgent] = await ethers.getSigners();
+  const appAdmin = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"; // replace with actual app admin address
+  const [deployer] = await ethers.getSigners(); // deployer is infraAdmin, 1st account in HH config
 
   // OnChainID deployment
   const identityImplementation = await new ethers.ContractFactory(
@@ -40,7 +41,7 @@ async function main() {
     OnchainID.contracts.Gateway.abi,
     OnchainID.contracts.Gateway.bytecode,
     deployer
-  ).deploy(await identityFactory.getAddress(), [irAgent.address]); // anyone can be signer
+  ).deploy(await identityFactory.getAddress(), [appAdmin]); // anyone can be signer
   await gateway.waitForDeployment();
   // end of OnChainID deployment
 
@@ -129,7 +130,7 @@ async function main() {
   ).deploy(await trexFactory.getAddress(), false);
   await trexGateway.waitForDeployment();
 
-  const txAddDeployer = await trexGateway.connect(deployer).addDeployer(deployer.address); // token deployer can be anyone
+  const txAddDeployer = await trexGateway.connect(deployer).addDeployer(appAdmin); // token deployer can be anyone
   await txAddDeployer.wait();
 
   // transfer trexFactory ownership to trexGateway
@@ -320,7 +321,7 @@ async function main() {
     TRex.contracts.IdentityRegistryStorage.abi,
     await identityRegistryStorageProxy.getAddress()
   );
-  const txAddAgent = await irStorage.connect(deployer).addAgent(irAgent.address);
+  const txAddAgent = await irStorage.connect(deployer).addAgent(appAdmin);
   await txAddAgent.wait();
 
   const transferOwnershipIRS = await irStorage.connect(deployer).transferOwnership(await trexFactory.getAddress());

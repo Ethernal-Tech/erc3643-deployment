@@ -23,7 +23,8 @@ async function main() {
     deployer
   );
 
-  const txDeployTREX = await trexGateway.connect(deployer).deployTREXSuite(
+  // deploy new token, irAgent is set as appAdmin, i.e. token deployer
+  const txDeployTREX = await trexGateway.connect(irAgent).deployTREXSuite(
     {
       owner: irAgent.address, // token owner/admin can be any account (doesn't have to be deployer)
       name: "Token Name98",
