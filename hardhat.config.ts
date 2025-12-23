@@ -1,7 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
-import "./tasks/mintToken";
+import "./tasks/mint-token";
 import "./tasks/kyc";
 import "./tasks/transfer";
 

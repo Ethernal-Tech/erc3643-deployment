@@ -21,4 +21,4 @@ npx hardhat vars set tokenAgent
 
 # Addresses
 
-After deployment addresses can be accessed in file `addresses-fluxion.json`
+After deployment addresses can be accessed in file `addresses-folion.json`

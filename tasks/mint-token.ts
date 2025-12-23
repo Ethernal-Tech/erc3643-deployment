@@ -1,7 +1,6 @@
 import { task } from "hardhat/config";
 import TRex from "@tokenysolutions/t-rex";
 import { expect } from "chai";
-import addresses from "../addresses-fluxion.json";
 
 task("mint-token", "Mints and unpauses a T-Rex token")
   .addParam("user", "Recipient address")

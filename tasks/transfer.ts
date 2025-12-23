@@ -1,7 +1,6 @@
 import { task } from "hardhat/config";
 import TRex from "@tokenysolutions/t-rex";
-import { expect } from "chai";
-import addresses from "../addresses-fluxion.json";
+import addresses from "../addresses-folion.json";
 
 task("transfer", "Transfers from sender to receiver")
   .addParam("sender", "Sender private key")

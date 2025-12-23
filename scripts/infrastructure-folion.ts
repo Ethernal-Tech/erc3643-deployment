@@ -312,8 +312,8 @@ async function main() {
     lockInTransferModule: await lockInTransferModuleProxy.getAddress(),
   };
 
-  writeFileSync("addresses-fluxion.json", JSON.stringify(addresses, null, 2));
-  console.log("Addresses written to addresses-fluxion.json");
+  writeFileSync("addresses-folion.json", JSON.stringify(addresses, null, 2));
+  console.log("Addresses written to addresses-folion.json");
 }
 
 // We recommend this pattern to be able to use async/await everywhere

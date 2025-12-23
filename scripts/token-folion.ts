@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import OnchainID from "@onchain-id/solidity";
 import TRex from "@tokenysolutions/t-rex";
 import { expect } from "chai";
-import addresses from "../addresses-fluxion.json";
+import addresses from "../addresses-folion.json";
 
 async function main() {
   const [deployer, _, irAgent, tokenAgent] = await ethers.getSigners();

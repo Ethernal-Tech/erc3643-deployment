@@ -1,8 +1,7 @@
 import { ethers, upgrades } from "hardhat";
 import { expect } from 'chai';
-import TRex from "@tokenysolutions/t-rex";
 import ConditionalTransferModule from "../artifacts/contracts/ConditionalTransferModule.sol/ConditionalTransferModule.json";
-import addresses from "../addresses-fluxion.json";
+import addresses from "../addresses-folion.json";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
