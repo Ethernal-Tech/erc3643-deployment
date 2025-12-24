@@ -2,7 +2,7 @@ import { loadFixture, mine } from "@nomicfoundation/hardhat-network-helpers";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { deployComplianceFixture } from "./fixtures/deploy-compliance.fixture";
-import LockInTransferModule from "../artifacts/contracts/LockInTransferModule.sol/LockInTransferModule.json";
+import LockInTransferModule from "../artifacts/contracts/compliance/LockInTransferModule.sol/LockInTransferModule.json";
 import TRex from "@tokenysolutions/t-rex";
 
 async function deployLockInTransferModule() {
@@ -195,7 +195,7 @@ describe("Compliance Module: LockInTransfer", () => {
       const context = await loadFixture(deployLockInTransferModule);
 
       const { compliance, lockInModule } = context.suite;
-      const { deployer, aliceWallet, bobWallet } = context.accounts;
+      const { aliceWallet, bobWallet } = context.accounts;
 
       const setWaitPeriodTx = await compliance
         .callModuleFunction(
@@ -216,7 +216,7 @@ describe("Compliance Module: LockInTransfer", () => {
         lockInModule.target
       );
 
-      // after mine alice can't execute transfer
+      // after mint alice can't execute transfer
       await expect(
         lockInModule.moduleCheck(
           aliceWallet.address,
