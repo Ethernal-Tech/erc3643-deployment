@@ -36,18 +36,16 @@ task("transfer", "Transfers from sender to receiver")
 
     const tx = await compliance.callModuleFunction(
       new hre.ethers.Interface([
-        "function batchApproveTransfers(address[], address[], uint256[])",
-      ]).encodeFunctionData("batchApproveTransfers", [
+        "function batchTransfersPermit(address[], address[], uint256[])",
+      ]).encodeFunctionData("batchTransfersPermit", [
         [senderWallet.address],
         [receiver],
         [etherAmount],
       ]),
-      addresses.conditionalTransferModule
+      addresses.permitTransferModule
     );
+    await tx.wait();
 
-    const txTransfer = await token
-      .connect(senderWallet)
-      .transfer(receiver, etherAmount);
-
+    const txTransfer = await token.connect(senderWallet).transfer(receiver, etherAmount);
     await txTransfer.wait();
   });

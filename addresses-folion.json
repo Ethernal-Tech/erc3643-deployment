@@ -1,12 +1,12 @@
 {
-  "trexGateway": "0x809d550fca64d94Bd9F66E60752A544199cfAC3D",
-  "gateway": "0xf5059a5D33d5853360D16C683c16e67980206f36",
-  "identityRegistryStorage": "0x1fA02b2d6A771842690194Cf62D91bdd92BfE28d",
-  "approveTransferModule": "0xCD8a1C3ba11CF5ECfa6267617243239504a98d90",
-  "countryPermitModule": "0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3",
-  "countryRestrictModule": "0x7bc06c482DEAd17c0e297aFbC32f6e63d3846650",
-  "maxBalanceModule": "0xFD471836031dc5108809D173A067e8486B9047A3",
-  "maxTotalSupplyModule": "0x1429859428C0aBc9C2C47C8Ee9FBaf82cFA0F20f",
-  "lockInTransferModule": "0x162A433068F51e18b7d13932F27e66a3f99E6890",
-  "marketplaceManager": "0x5081a39b8A5f0E35a8D959395a630b68B74Dd30f"
+  "trexGateway": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+  "gateway": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+  "identityRegistryStorage": "0x84eA74d481Ee0A5332c457a4d796187F6Ba67fEB",
+  "countryPermitModule": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
+  "countryRestrictModule": "0x59b670e9fA9D0A427751Af201D676719a970857b",
+  "maxBalanceModule": "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
+  "maxTotalSupplyModule": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
+  "lockInTransferModule": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+  "permitTransferModule": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
+  "marketplaceManager": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690"
 }

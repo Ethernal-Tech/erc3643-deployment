@@ -3,12 +3,12 @@ import OnchainID from "@onchain-id/solidity";
 import TRex from "@tokenysolutions/t-rex";
 import { writeFileSync } from "fs";
 import TransparentUpgradeableProxy from "@openzeppelin/contracts/build/contracts/TransparentUpgradeableProxy.json";
-import ApproveTransferModule from "../artifacts/contracts/compliance/ApproveTransferModule.sol/ApproveTransferModule.json";
 import CountryPermitModule from "../artifacts/contracts/compliance/CountryPermitModule.sol/CountryPermitModule.json";
 import CountryRestrictModule from "../artifacts/contracts/compliance/CountryRestrictModule.sol/CountryRestrictModule.json";
 import MaxBalanceModule from "../artifacts/contracts/compliance/MaxBalanceModule.sol/MaxBalanceModule.json";
 import MaxTotalSupplyModule from "../artifacts/contracts/compliance/MaxTotalSupplyModule.sol/MaxTotalSupplyModule.json";
 import LockInTransferModule from "../artifacts/contracts/compliance/LockInTransferModule.sol/LockInTransferModule.json";
+import PermitTransferModule from "../artifacts/contracts/compliance/PermitTransferModule.sol/PermitTransferModule.json";
 import MarketplaceManager from "../artifacts/contracts/marketplace/MarketplaceManager.sol/MarketplaceManager.json";
 
 async function main() {
@@ -147,29 +147,6 @@ async function main() {
   // TREXGateway contains trexFactory; trexFactory contains idFactory, token; token contains MC, IR; IR contains IRS, TIR, CTR
   // Gateway is for users identity creation
 
-  // ApproveTransferModule
-  const approveTransferModule = await new ethers.ContractFactory(
-    ApproveTransferModule.abi,
-    ApproveTransferModule.bytecode,
-    deployer
-  ).deploy();
-  await approveTransferModule.waitForDeployment();
-
-  const approveTransferModuleProxy = await new ethers.ContractFactory(
-    TRex.contracts.ModuleProxy.abi,
-    TRex.contracts.ModuleProxy.bytecode,
-    deployer
-  ).deploy(
-    await approveTransferModule.getAddress(),
-    approveTransferModule.interface.encodeFunctionData("initialize")
-  );
-  await approveTransferModuleProxy.waitForDeployment();
-
-  console.log(
-    "Approve Transfer Module Proxy ->",
-    await approveTransferModuleProxy.getAddress()
-  );
-
   const countryPermitModule = await new ethers.ContractFactory(
     CountryPermitModule.abi,
     CountryPermitModule.bytecode,
@@ -284,6 +261,29 @@ async function main() {
     await lockInTransferModuleProxy.getAddress()
   );
 
+  // PermitTransferModule
+  const permitTransferModule = await new ethers.ContractFactory(
+    PermitTransferModule.abi,
+    PermitTransferModule.bytecode,
+    deployer
+  ).deploy();
+  await permitTransferModule.waitForDeployment();
+
+  const permitTransferModuleProxy = await new ethers.ContractFactory(
+    TRex.contracts.ModuleProxy.abi,
+    TRex.contracts.ModuleProxy.bytecode,
+    deployer
+  ).deploy(
+    await permitTransferModule.getAddress(),
+    permitTransferModule.interface.encodeFunctionData("initialize")
+  );
+  await permitTransferModuleProxy.waitForDeployment();
+
+  console.log(
+    "Permit Transfer Module Proxy ->",
+    await permitTransferModuleProxy.getAddress()
+  );
+
   // MarketplaceManager
   const marketplaceManager = await new ethers.ContractFactory(
     MarketplaceManager.abi,
@@ -331,12 +331,12 @@ async function main() {
     trexGateway: await trexGateway.getAddress(),
     gateway: await gateway.getAddress(),
     identityRegistryStorage: await identityRegistryStorageProxy.getAddress(),
-    approveTransferModule: await approveTransferModuleProxy.getAddress(),
     countryPermitModule: await countryPermitModuleProxy.getAddress(),
     countryRestrictModule: await countryRestrictModuleProxy.getAddress(),
     maxBalanceModule: await maxBalanceModuleProxy.getAddress(),
     maxTotalSupplyModule: await maxTotalSupplyModuleProxy.getAddress(),
     lockInTransferModule: await lockInTransferModuleProxy.getAddress(),
+    permitTransferModule: await permitTransferModuleProxy.getAddress(),
     marketplaceManager: await marketplaceManagerProxy.getAddress(),
   };
 
