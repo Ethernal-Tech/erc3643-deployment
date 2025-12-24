@@ -2,17 +2,17 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { deployComplianceFixture } from "./fixtures/deploy-compliance.fixture";
-import CountryPermitModule from "../artifacts/contracts/compliance/CountryPermitModule.sol/CountryPermitModule.json";
+import CountryRestrictModule from "../artifacts/contracts/compliance/CountryRestrictModule.sol/CountryRestrictModule.json";
 import TRex from "@tokenysolutions/t-rex";
 
-async function deployCountryPermitModule() {
+async function deployCountryRestrictModule() {
   const context = await loadFixture(deployComplianceFixture);
   const { token } = context.suite;
   const { deployer } = context.accounts;
 
   const module = await new ethers.ContractFactory(
-    CountryPermitModule.abi,
-    CountryPermitModule.bytecode,
+    CountryRestrictModule.abi,
+    CountryRestrictModule.bytecode,
     deployer
   ).deploy();
 
@@ -25,8 +25,8 @@ async function deployCountryPermitModule() {
     module.interface.encodeFunctionData("initialize")
   );
 
-  const countryPermitModule = await ethers.getContractAt(
-    CountryPermitModule.abi,
+  const countryRestrictModule = await ethers.getContractAt(
+    CountryRestrictModule.abi,
     proxy.target,
     deployer
   );
@@ -38,23 +38,23 @@ async function deployCountryPermitModule() {
     complianceAddr
   );
 
-  await compliance.addModule(countryPermitModule.target);
+  await compliance.addModule(countryRestrictModule.target);
   return {
     ...context,
     suite: {
       ...context.suite,
-      countryPermitModule,
+      countryRestrictModule,
       compliance,
     },
   };
 }
 
-describe("Compliance Module: CountryPermit", () => {
+describe("Compliance Module: CountryRestrict", () => {
   describe(".name", () => {
     it("should return the module name", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
-      expect(await context.suite.countryPermitModule.name()).to.eq(
-        "CountryPermitModule"
+      const context = await loadFixture(deployCountryRestrictModule);
+      expect(await context.suite.countryRestrictModule.name()).to.eq(
+        "CountryRestrictModule"
       );
     });
   });
@@ -63,7 +63,7 @@ describe("Compliance Module: CountryPermit", () => {
     it("should only be callable once", async () => {
       const { accounts } = await loadFixture(deployComplianceFixture);
       const module = (
-        await ethers.deployContract("CountryPermitModule")
+        await ethers.deployContract("CountryRestrictModule")
       ).connect(accounts.deployer);
       await module.initialize();
 
@@ -74,77 +74,77 @@ describe("Compliance Module: CountryPermit", () => {
     });
   });
 
-  describe(".countryPermit", () => {
+  describe(".countryRestrict", () => {
     it("should revert if called directly", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
+      const context = await loadFixture(deployCountryRestrictModule);
 
       await expect(
-        context.suite.countryPermitModule.countryPermit(688)
+        context.suite.countryRestrictModule.countryRestrict(688)
       ).to.be.revertedWith("only bound compliance can call");
     });
 
-    it("should allow compliance to permit country", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
+    it("should allow compliance to restrict country", async () => {
+      const context = await loadFixture(deployCountryRestrictModule);
 
       await expect(context.suite.compliance
         .callModuleFunction(
           new ethers.Interface([
-            "function countryPermit(uint16)",
-          ]).encodeFunctionData("countryPermit", [688]),
-          context.suite.countryPermitModule.target
+            "function countryRestrict(uint16)",
+          ]).encodeFunctionData("countryRestrict", [688]),
+          context.suite.countryRestrictModule.target
         )).to.not.be.reverted;
     });
   });
 
-  describe(".removeCountryPermission", () => {
+  describe(".removeCountryRestriction", () => {
     it("should revert if called directly", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
+      const context = await loadFixture(deployCountryRestrictModule);
 
       await expect(
-        context.suite.countryPermitModule.removeCountryPermission(688)
+        context.suite.countryRestrictModule.removeCountryRestriction(688)
       ).to.be.revertedWith("only bound compliance can call");
     });
 
-    it("should allow compliance to remove country permission", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
+    it("should allow compliance to remove country restriction", async () => {
+      const context = await loadFixture(deployCountryRestrictModule);
 
       await expect(context.suite.compliance
         .callModuleFunction(
           new ethers.Interface([
-            "function removeCountryPermission(uint16)",
-          ]).encodeFunctionData("removeCountryPermission", [688]),
-          context.suite.countryPermitModule.target
+            "function removeCountryRestriction(uint16)",
+          ]).encodeFunctionData("removeCountryRestriction", [688]),
+          context.suite.countryRestrictModule.target
         )).to.not.be.reverted;
     });
   });
 
-  describe(".setCountriesPermission", () => {
+  describe(".setCountriesRestriction", () => {
     it("should revert if called directly", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
+      const context = await loadFixture(deployCountryRestrictModule);
 
       await expect(
-        context.suite.countryPermitModule.setCountriesPermission([688], [true])
+        context.suite.countryRestrictModule.setCountriesRestriction([688], [true])
       ).to.be.revertedWith("only bound compliance can call");
     });
 
-    it("should allow compliance to set countries permission", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
+    it("should allow compliance to set countries restriction", async () => {
+      const context = await loadFixture(deployCountryRestrictModule);
 
       await expect(context.suite.compliance
         .callModuleFunction(
           new ethers.Interface([
-            "function setCountriesPermission(uint16[],bool[])",
-          ]).encodeFunctionData("setCountriesPermission", [[688], [true]]),
-          context.suite.countryPermitModule.target
+            "function setCountriesRestriction(uint16[],bool[])",
+          ]).encodeFunctionData("setCountriesRestriction", [[688], [true]]),
+          context.suite.countryRestrictModule.target
         )).to.not.be.reverted;
     });
   });
 
   describe(".moduleTransferAction", () => {
     it("should revert if called directly", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
+      const context = await loadFixture(deployCountryRestrictModule);
       await expect(
-        context.suite.countryPermitModule.moduleTransferAction(
+        context.suite.countryRestrictModule.moduleTransferAction(
           context.accounts.aliceWallet.address,
           context.accounts.bobWallet.address,
           100
@@ -153,8 +153,8 @@ describe("Compliance Module: CountryPermit", () => {
     });
 
     it("should work properly", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
-      const { compliance, countryPermitModule } = context.suite;
+      const context = await loadFixture(deployCountryRestrictModule);
+      const { compliance, countryRestrictModule } = context.suite;
       const { aliceWallet, bobWallet } = context.accounts;
 
       await expect(compliance.callModuleFunction(
@@ -165,29 +165,20 @@ describe("Compliance Module: CountryPermit", () => {
           bobWallet.address,
           50,
         ]),
-        countryPermitModule.target
+        countryRestrictModule.target
       )).to.emit(compliance, "ModuleInteraction");
     });
   });
 
   describe(".moduleCheck", () => {
-    it("should work when country is permitted", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
+    it("should work when country is not restricted", async () => {
+      const context = await loadFixture(deployCountryRestrictModule);
 
-      const { compliance, countryPermitModule } = context.suite;
+      const { compliance, countryRestrictModule } = context.suite;
       const { aliceWallet, bobWallet } = context.accounts;
 
-      await expect(compliance
-        .callModuleFunction(
-          new ethers.Interface([
-            "function countryPermit(uint16)",
-          ]).encodeFunctionData("countryPermit", [688]),
-          countryPermitModule.target
-        )
-      ).to.emit(countryPermitModule, "CountryPermitted").withArgs(compliance, 688);
-
       await expect(
-        countryPermitModule.moduleCheck(
+        countryRestrictModule.moduleCheck(
           aliceWallet.address,
           bobWallet.address,
           50,
@@ -196,14 +187,23 @@ describe("Compliance Module: CountryPermit", () => {
       ).to.eventually.true;
     });
 
-    it("should revert or return false when country is not permitted", async () => {
-      const context = await loadFixture(deployCountryPermitModule);
+    it("should revert or return false when country is restricted", async () => {
+      const context = await loadFixture(deployCountryRestrictModule);
 
-      const { compliance, countryPermitModule } = context.suite;
+      const { compliance, countryRestrictModule } = context.suite;
       const { aliceWallet, bobWallet } = context.accounts;
 
+      await expect(compliance
+        .callModuleFunction(
+          new ethers.Interface([
+            "function countryRestrict(uint16)",
+          ]).encodeFunctionData("countryRestrict", [688]),
+          countryRestrictModule.target
+        )
+      ).to.emit(countryRestrictModule, "CountryRestricted").withArgs(compliance, 688);
+
       await expect(
-        countryPermitModule.moduleCheck(
+        countryRestrictModule.moduleCheck(
           aliceWallet.address,
           bobWallet.address,
           50,

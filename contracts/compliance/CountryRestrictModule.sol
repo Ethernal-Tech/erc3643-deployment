@@ -7,7 +7,7 @@ import "./AbstractCountryModule.sol";
 contract CountryRestrictModule is AbstractCountryModule {
     /**
      *  this event is emitted whenever a country has been restricted.
-     *  the event is emitted by 'restrictCountry' and 'setCountriesRestriction' functions.
+     *  the event is emitted by 'countryRestrict' and 'setCountriesRestriction' functions.
      *  `_country` is the numeric ISO 3166-1 of the restricted country.
      */
     event CountryRestricted(address _compliance, uint16 _country);
@@ -32,7 +32,7 @@ contract CountryRestrictModule is AbstractCountryModule {
      *  emits a `CountryRestricted` event
      *  @param _country ISO 3166-1 numeric standard code of the country to be restricted
      */
-    function restrictCountry(uint16 _country) public onlyComplianceCall {
+    function countryRestrict(uint16 _country) public onlyComplianceCall {
         _setCountryStatus(msg.sender, _country, true);
         emit CountryRestricted(msg.sender, _country);
     }
@@ -58,7 +58,7 @@ contract CountryRestrictModule is AbstractCountryModule {
     function setCountriesRestriction(uint16[] calldata _countries, bool[] calldata _restrictions) external onlyComplianceCall {
         for (uint256 i = 0; i < _countries.length; i++) {
             if (_restrictions[i]) {
-                restrictCountry(_countries[i]);
+                countryRestrict(_countries[i]);
             } else {
                 removeCountryRestriction(_countries[i]);
             }
