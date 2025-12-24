@@ -160,6 +160,24 @@ export async function deployComplianceFixture() {
     trexSuiteDeployed[0].args[0]
   );
 
+  // add users to identity registry
+  await gateway.connect(aliceWallet).deployIdentityForWallet(aliceWallet.address)
+  await gateway.connect(bobWallet).deployIdentityForWallet(bobWallet.address)
+
+  const aliceIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi,
+    await identityFactory.getIdentity(aliceWallet.address), irAgent);
+  const bobIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi,
+    await identityFactory.getIdentity(bobWallet.address), irAgent);
+
+  const identityRegistryAddr = await tokenContract.identityRegistry();
+  const identityRegistry = await ethers.getContractAt(
+    TRex.contracts.IdentityRegistry.abi,
+    identityRegistryAddr
+  );
+
+  await identityRegistry.connect(irAgent).registerIdentity(aliceWallet.address, aliceIdentity.getAddress(), 688);
+  await identityRegistry.connect(irAgent).registerIdentity(bobWallet.address, bobIdentity.getAddress(), 688);
+
   return {
     accounts: {
       deployer,
