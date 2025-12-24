@@ -181,10 +181,14 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         uint256 _amount
     ) private {
         if (_sender == address(0)) {
-            return;
+            return; // no dequeue for mint
         }
 
         Queue storage queue = _transferLimits[_compliance][_sender];
+        if (queue.end == 0) {
+            return; // queue is empty
+        }
+
         bool doResetQueue = true;
         for (uint256 i = queue.start; i < queue.end; i++) {
             if (queue.items[i].untilBlock >= block.number) {
