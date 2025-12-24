@@ -7,7 +7,7 @@ import "./AbstractCountryModule.sol";
 contract CountryPermitModule is AbstractCountryModule {
     /**
      *  this event is emitted whenever a country has been permitted.
-     *  the event is emitted by 'permitCountry' and 'setCountriesPermission' functions.
+     *  the event is emitted by 'countryPermit' and 'setCountriesPermission' functions.
      *  `_country` is the numeric ISO 3166-1 of the permitted country.
      */
     event CountryPermitted(address _compliance, uint16 _country);
@@ -32,7 +32,7 @@ contract CountryPermitModule is AbstractCountryModule {
      *  emits a `CountryPermitted` event
      *  @param _country ISO 3166-1 numeric standard code of the country to be permitted
      */
-    function permitCountry(uint16 _country) public onlyComplianceCall {
+    function countryPermit(uint16 _country) public onlyComplianceCall {
         _setCountryStatus(msg.sender, _country, true);
         emit CountryPermitted(msg.sender, _country);
     }
@@ -58,7 +58,7 @@ contract CountryPermitModule is AbstractCountryModule {
     function setCountriesPermission(uint16[] calldata _countries, bool[] calldata _permissions) external onlyComplianceCall {
         for (uint256 i = 0; i < _countries.length; i++) {
             if (_permissions[i]) {
-                permitCountry(_countries[i]);
+                countryPermit(_countries[i]);
             } else {
                 removeCountryPermission(_countries[i]);
             }
