@@ -42,7 +42,7 @@ task("transfer", "Transfers from sender to receiver")
         [receiver],
         [etherAmount],
       ]),
-      addresses.permitTransferModule
+      addresses.transferPermitModule
     );
     await tx.wait();
 

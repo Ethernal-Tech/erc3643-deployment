@@ -8,7 +8,7 @@ import CountryRestrictModule from "../artifacts/contracts/compliance/CountryRest
 import MaxBalanceModule from "../artifacts/contracts/compliance/MaxBalanceModule.sol/MaxBalanceModule.json";
 import MaxTotalSupplyModule from "../artifacts/contracts/compliance/MaxTotalSupplyModule.sol/MaxTotalSupplyModule.json";
 import LockInTransferModule from "../artifacts/contracts/compliance/LockInTransferModule.sol/LockInTransferModule.json";
-import PermitTransferModule from "../artifacts/contracts/compliance/PermitTransferModule.sol/PermitTransferModule.json";
+import TransferPermitModule from "../artifacts/contracts/compliance/TransferPermitModule.sol/TransferPermitModule.json";
 import MarketplaceManager from "../artifacts/contracts/marketplace/MarketplaceManager.sol/MarketplaceManager.json";
 
 async function main() {
@@ -261,27 +261,27 @@ async function main() {
     await lockInTransferModuleProxy.getAddress()
   );
 
-  // PermitTransferModule
-  const permitTransferModule = await new ethers.ContractFactory(
-    PermitTransferModule.abi,
-    PermitTransferModule.bytecode,
+  // TransferPermitModule
+  const transferPermitModule = await new ethers.ContractFactory(
+    TransferPermitModule.abi,
+    TransferPermitModule.bytecode,
     deployer
   ).deploy();
-  await permitTransferModule.waitForDeployment();
+  await transferPermitModule.waitForDeployment();
 
-  const permitTransferModuleProxy = await new ethers.ContractFactory(
+  const transferPermitModuleProxy = await new ethers.ContractFactory(
     TRex.contracts.ModuleProxy.abi,
     TRex.contracts.ModuleProxy.bytecode,
     deployer
   ).deploy(
-    await permitTransferModule.getAddress(),
-    permitTransferModule.interface.encodeFunctionData("initialize")
+    await transferPermitModule.getAddress(),
+    transferPermitModule.interface.encodeFunctionData("initialize")
   );
-  await permitTransferModuleProxy.waitForDeployment();
+  await transferPermitModuleProxy.waitForDeployment();
 
   console.log(
-    "Permit Transfer Module Proxy ->",
-    await permitTransferModuleProxy.getAddress()
+    "Transfer Permit Module Proxy ->",
+    await transferPermitModuleProxy.getAddress()
   );
 
   // MarketplaceManager
@@ -336,7 +336,7 @@ async function main() {
     maxBalanceModule: await maxBalanceModuleProxy.getAddress(),
     maxTotalSupplyModule: await maxTotalSupplyModuleProxy.getAddress(),
     lockInTransferModule: await lockInTransferModuleProxy.getAddress(),
-    permitTransferModule: await permitTransferModuleProxy.getAddress(),
+    transferPermitModule: await transferPermitModuleProxy.getAddress(),
     marketplaceManager: await marketplaceManagerProxy.getAddress(),
   };
 

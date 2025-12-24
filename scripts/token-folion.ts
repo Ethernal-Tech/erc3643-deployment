@@ -37,7 +37,7 @@ async function main() {
       complianceModules: [
         addresses.countryPermitModule,
         addresses.maxBalanceModule,
-        addresses.permitTransferModule,
+        addresses.transferPermitModule,
       ],
       complianceSettings: [
         new ethers.Interface([
