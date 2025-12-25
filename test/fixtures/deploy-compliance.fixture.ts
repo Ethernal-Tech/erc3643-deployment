@@ -2,6 +2,7 @@ import { ethers } from "hardhat";
 import TRex from "@tokenysolutions/t-rex";
 import OnchainID from "@onchain-id/solidity";
 import { expect } from "chai";
+import ERC3643Token from "../../artifacts/contracts/token/ERC3643Token.sol/ERC3643Token.json";
 
 // eslint-disable-next-line import/prefer-default-export
 export async function deployComplianceFixture() {
@@ -60,8 +61,8 @@ export async function deployComplianceFixture() {
   ).deploy();
   
   const tokenImplementation = await new ethers.ContractFactory(
-    TRex.contracts.Token.abi,
-    TRex.contracts.Token.bytecode,
+    ERC3643Token.abi,
+    ERC3643Token.bytecode,
     deployer
   ).deploy();
   

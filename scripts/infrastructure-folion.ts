@@ -10,6 +10,7 @@ import MaxTotalSupplyModule from "../artifacts/contracts/compliance/MaxTotalSupp
 import LockInTransferModule from "../artifacts/contracts/compliance/LockInTransferModule.sol/LockInTransferModule.json";
 import TransferPermitModule from "../artifacts/contracts/compliance/TransferPermitModule.sol/TransferPermitModule.json";
 import MarketplaceManager from "../artifacts/contracts/marketplace/MarketplaceManager.sol/MarketplaceManager.json";
+import ERC3643Token from "../artifacts/contracts/token/ERC3643Token.sol/ERC3643Token.json";
 
 async function main() {
   const appAdmin = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"; // replace with actual app admin address
@@ -75,8 +76,8 @@ async function main() {
   await modularComplianceImplementation.waitForDeployment();
 
   const tokenImplementation = await new ethers.ContractFactory(
-    TRex.contracts.Token.abi,
-    TRex.contracts.Token.bytecode,
+    ERC3643Token.abi,
+    ERC3643Token.bytecode,
     deployer
   ).deploy();
   await tokenImplementation.waitForDeployment();

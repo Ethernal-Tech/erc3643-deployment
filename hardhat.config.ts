@@ -18,7 +18,15 @@ const config: HardhatUserConfig = {
       ],
     },
   },
-  solidity: "0.8.17",
+  solidity: {
+    version: "0.8.17",
+     settings: {
+      optimizer: {
+        enabled: true,
+        runs: 1, // Lower runs (e.g., 1-200) prioritize smaller size over gas efficiency
+      }
+    }
+  }
 };
 
 export default config;
