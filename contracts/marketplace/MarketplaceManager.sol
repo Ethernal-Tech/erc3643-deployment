@@ -314,7 +314,7 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
             isERC3643(token2.token) &&
             isTokenOwner(token2.token, token2.sender) &&
             isTokenAgent(token2.token, msg.sender)
-            , "mint can be executed by token agent if token owner is set as taker");
+            , "mint has to be executed by minting token agent and minting token owner has to be taker");
         TxFees memory fees = computeFee(_transferID);
         token1Contract.transferFrom(token1.sender, token2.sender, (token1.amount - fees.txFee1));
         if (fees.txFee1 != 0) {

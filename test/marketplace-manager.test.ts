@@ -214,7 +214,7 @@ describe("Marketplace Manager", () => {
       ).to.be.revertedWith("transfer ID does not exist");
     });
 
-    it("should revert if taker is not a token2 owner", async () => {
+    it("should revert if taker is not a minting token owner", async () => {
       const context = await loadFixture(deployMarketplaceManager);
       const { token, marketplaceManager } = context.suite;
       const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
@@ -228,10 +228,10 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
       await expect(
         marketplaceManager.connect(tokenAgent).takeMintTransfer(id)
-      ).to.be.revertedWith("mint can be executed by token agent if token owner is set as taker");
+      ).to.be.revertedWith("mint has to be executed by minting token agent and minting token owner has to be taker");
     });
 
-    it("should revert if sender is not a token2 agent", async () => {
+    it("should revert if sender is not a minting token agent", async () => {
       const context = await loadFixture(deployMarketplaceManager);
       const { token, marketplaceManager } = context.suite;
       const { aliceWallet, bobWallet, deployer } = context.accounts;
@@ -245,7 +245,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, deployer, token, 20)
       await expect(
         marketplaceManager.connect(bobWallet).takeMintTransfer(id)
-      ).to.be.revertedWith("mint can be executed by token agent if token owner is set as taker");
+      ).to.be.revertedWith("mint has to be executed by minting token agent and minting token owner has to be taker");
     });
 
     it("should execute mint properly", async () => {
