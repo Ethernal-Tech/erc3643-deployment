@@ -210,7 +210,7 @@ describe("Marketplace Manager", () => {
       const { bobWallet } = context.accounts;
 
       await expect(
-        marketplaceManager.connect(bobWallet).takeTransfer(ethers.encodeBytes32String("0"))
+        marketplaceManager.connect(bobWallet).takeMintTransfer(ethers.encodeBytes32String("0"))
       ).to.be.revertedWith("transfer ID does not exist");
     });
 
