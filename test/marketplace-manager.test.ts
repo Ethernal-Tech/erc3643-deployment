@@ -30,6 +30,7 @@ async function deployMarketplaceManager() {
 
   await token.connect(tokenAgent).mint(aliceWallet, 100)
   await token.connect(tokenAgent).mint(bobWallet, 100)
+  await token.connect(tokenAgent).mint(deployer, 100)
   await token.connect(tokenAgent).unpause()
 
   // add marketplace manager as a token agent
@@ -182,25 +183,25 @@ describe("Marketplace Manager", () => {
         marketplaceManager.connect(bobWallet).takeTransfer(id)
       ).to.be.revertedWith("not enough allowance to transfer");
     });
-  });
 
-  it("should execute transfer properly", async () => {
-    const context = await loadFixture(deployMarketplaceManager);
-    const { token, marketplaceManager } = context.suite;
-    const { aliceWallet, bobWallet } = context.accounts;
+    it("should execute transfer properly", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { token, marketplaceManager } = context.suite;
+      const { aliceWallet, bobWallet } = context.accounts;
 
-    // approve transfer
-    await token.connect(aliceWallet).approve(marketplaceManager.target, 50)
-    await expect(
-      marketplaceManager.connect(aliceWallet).initiateTransfer(token, 50, bobWallet, token, 20)
-    ).to.emit(marketplaceManager, "TransferInitiated");
+      // approve transfer
+      await token.connect(aliceWallet).approve(marketplaceManager.target, 50)
+      await expect(
+        marketplaceManager.connect(aliceWallet).initiateTransfer(token, 50, bobWallet, token, 20)
+      ).to.emit(marketplaceManager, "TransferInitiated");
 
-    // approve transfer
-    await token.connect(bobWallet).approve(marketplaceManager.target, 20)
-    const id = await marketplaceManager.connect(bobWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
-    await expect(
-      marketplaceManager.connect(bobWallet).takeTransfer(id)
-    ).to.emit(marketplaceManager, "TransferExecuted").withArgs(id)
+      // approve transfer
+      await token.connect(bobWallet).approve(marketplaceManager.target, 20)
+      const id = await marketplaceManager.connect(bobWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
+      await expect(
+        marketplaceManager.connect(bobWallet).takeTransfer(id)
+      ).to.emit(marketplaceManager, "TransferExecuted").withArgs(id)
+    });
   });
 
   describe(".takeMintTransfer", () => {
@@ -262,6 +263,95 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, deployer, token, 20)
       await expect(
         marketplaceManager.connect(tokenAgent).takeMintTransfer(id)
+      ).to.emit(marketplaceManager, "TransferExecuted").withArgs(id)
+    });
+  });
+
+  describe(".takeBurnTransfer", () => {
+    it("should revert if transfer not initiated previously", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { marketplaceManager } = context.suite;
+      const { bobWallet } = context.accounts;
+
+      await expect(
+        marketplaceManager.connect(bobWallet).takeBurnTransfer(ethers.encodeBytes32String("0"))
+      ).to.be.revertedWith("transfer ID does not exist");
+    });
+
+    it("should revert if taker is not a burning token owner", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { token, marketplaceManager } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+
+      await expect(
+        marketplaceManager.connect(aliceWallet).initiateBurnTransfer(token, 50, bobWallet, token, 20)
+      ).to.emit(marketplaceManager, "TransferInitiated");
+
+      const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
+      await expect(
+        marketplaceManager.connect(tokenAgent).takeBurnTransfer(id)
+      ).to.be.revertedWith("burn has to be executed by burning token agent and burning token owner has to be taker");
+    });
+
+    it("should revert if sender is not a burning token agent", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { token, marketplaceManager } = context.suite;
+      const { aliceWallet, bobWallet, deployer } = context.accounts;
+
+      await expect(
+        marketplaceManager.connect(aliceWallet).initiateBurnTransfer(token, 50, deployer, token, 20)
+      ).to.emit(marketplaceManager, "TransferInitiated");
+
+      const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, deployer, token, 20)
+      await expect(
+        marketplaceManager.connect(bobWallet).takeBurnTransfer(id)
+      ).to.be.revertedWith("burn has to be executed by burning token agent and burning token owner has to be taker");
+    });
+
+    it("should revert if sender (taker) has no enough balance", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { token, marketplaceManager } = context.suite;
+      const { aliceWallet, deployer, tokenAgent } = context.accounts;
+
+      await expect(
+        marketplaceManager.connect(aliceWallet).initiateBurnTransfer(token, 50, deployer, token, 200)
+      ).to.emit(marketplaceManager, "TransferInitiated");
+
+      const id = await marketplaceManager.connect(tokenAgent).computeTransferID(0, aliceWallet, token, 50, deployer, token, 200)
+      await expect(
+        marketplaceManager.connect(tokenAgent).takeBurnTransfer(id)
+      ).to.be.revertedWith("not enough tokens in balance");
+    });
+
+    it("should revert if sender (taker) has no approved balance in favour of marketplace manager", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { token, marketplaceManager } = context.suite;
+      const { aliceWallet, deployer, tokenAgent } = context.accounts;
+
+      await expect(
+        marketplaceManager.connect(aliceWallet).initiateBurnTransfer(token, 50, deployer, token, 20)
+      ).to.emit(marketplaceManager, "TransferInitiated");
+
+      const id = await marketplaceManager.connect(tokenAgent).computeTransferID(0, aliceWallet, token, 50, deployer, token, 20)
+      await expect(
+        marketplaceManager.connect(tokenAgent).takeTransfer(id)
+      ).to.be.revertedWith("not enough allowance to transfer");
+    });
+
+    it("should execute burn properly", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { token, marketplaceManager } = context.suite;
+      const { aliceWallet, tokenAgent, deployer } = context.accounts;
+
+      await expect(
+        marketplaceManager.connect(aliceWallet).initiateBurnTransfer(token, 50, deployer, token, 20)
+      ).to.emit(marketplaceManager, "TransferInitiated");
+
+      // approve transfer
+      await token.connect(deployer).approve(marketplaceManager.target, 20)
+      const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, deployer, token, 20)
+      await expect(
+        marketplaceManager.connect(tokenAgent).takeBurnTransfer(id)
       ).to.emit(marketplaceManager, "TransferExecuted").withArgs(id)
     });
   });
