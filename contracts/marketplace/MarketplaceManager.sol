@@ -196,11 +196,11 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         address _counterpart,
         address _token2,
         uint256 _token2Amount) external {
-        require(IERC20(_token1).balanceOf(msg.sender) >= _token1Amount, "Not enough tokens in balance");
+        require(IERC20(_token1).balanceOf(msg.sender) >= _token1Amount, "not enough tokens in balance");
         require(IERC20(_token1).allowance(msg.sender, address(this)) >= _token1Amount,
             "not enough allowance to initiate transfer");
         require (_counterpart != address(0), "counterpart address cannot be null");
-        require(IERC20(_token2).totalSupply() != 0, "invalid address : address is not an ERC20");
+        require(IERC20(_token2).totalSupply() != 0, "invalid token2 address: address is not an ERC20");
 
         // token1 sender, amount and address
         Delivery memory token1;
@@ -271,8 +271,8 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
             msg.sender == token2.sender ||
             isTokenAgent(token1.token, msg.sender) ||
             isTokenAgent(token2.token, msg.sender)
-            , "transfer has to be done by the counterpart or by owner");
-        require(token2Contract.balanceOf(token2.sender) >= token2.amount, "Not enough tokens in balance");
+            , "transfer has to be executed by the counterpart or by token agent");
+        require(token2Contract.balanceOf(token2.sender) >= token2.amount, "not enough tokens in balance");
         require(token2Contract.allowance(token2.sender, address(this)) >= token2.amount,
             "not enough allowance to transfer");
         TxFees memory fees = computeFee(_transferID);

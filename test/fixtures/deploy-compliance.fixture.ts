@@ -163,11 +163,14 @@ export async function deployComplianceFixture() {
   // add users to identity registry
   await gateway.connect(aliceWallet).deployIdentityForWallet(aliceWallet.address)
   await gateway.connect(bobWallet).deployIdentityForWallet(bobWallet.address)
+  await gateway.connect(bobWallet).deployIdentityForWallet(deployer.address)
 
   const aliceIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi,
     await identityFactory.getIdentity(aliceWallet.address), irAgent);
   const bobIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi,
     await identityFactory.getIdentity(bobWallet.address), irAgent);
+  const deployerIdentity = await ethers.getContractAt(OnchainID.contracts.Identity.abi,
+    await identityFactory.getIdentity(deployer.address), irAgent);
 
   const identityRegistryAddr = await tokenContract.identityRegistry();
   const identityRegistry = await ethers.getContractAt(
@@ -177,6 +180,7 @@ export async function deployComplianceFixture() {
 
   await identityRegistry.connect(irAgent).registerIdentity(aliceWallet.address, aliceIdentity.getAddress(), 688);
   await identityRegistry.connect(irAgent).registerIdentity(bobWallet.address, bobIdentity.getAddress(), 688);
+  await identityRegistry.connect(irAgent).registerIdentity(deployer.address, deployer.getAddress(), 688);
 
   return {
     accounts: {
