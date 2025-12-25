@@ -355,4 +355,81 @@ describe("Marketplace Manager", () => {
       ).to.emit(marketplaceManager, "TransferExecuted").withArgs(id)
     });
   });
+
+  describe(".cancelTransfer", () => {
+    it("should revert if transfer not initiated previously", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { marketplaceManager } = context.suite;
+      const { bobWallet } = context.accounts;
+
+      await expect(
+        marketplaceManager.connect(bobWallet).cancelTransfer(ethers.encodeBytes32String("0"))
+      ).to.be.revertedWith("transfer ID does not exist");
+    });
+
+    it("should revert if cancel is executed from unauthorized user ", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { token, marketplaceManager } = context.suite;
+      const { aliceWallet, bobWallet, anotherWallet } = context.accounts;
+
+      // approve transfer
+      await token.connect(aliceWallet).approve(marketplaceManager.target, 50)
+      await expect(
+        marketplaceManager.connect(aliceWallet).initiateTransfer(token, 50, bobWallet, token, 20)
+      ).to.emit(marketplaceManager, "TransferInitiated");
+
+      const id = await marketplaceManager.connect(anotherWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
+      await expect(
+        marketplaceManager.connect(anotherWallet).cancelTransfer(id)
+      ).to.be.revertedWith("you are not allowed to cancel this transfer");
+    });
+
+    it("should cancel if sender is token1 sender", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { token, marketplaceManager } = context.suite;
+      const { aliceWallet, bobWallet } = context.accounts;
+
+      await token.connect(aliceWallet).approve(marketplaceManager.target, 50)
+      await expect(
+        marketplaceManager.connect(aliceWallet).initiateTransfer(token, 50, bobWallet, token, 20)
+      ).to.emit(marketplaceManager, "TransferInitiated");
+
+      const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
+      await expect(
+        marketplaceManager.connect(aliceWallet).cancelTransfer(id)
+      ).to.emit(marketplaceManager, "TransferCancelled").withArgs(id)
+    });
+
+    it("should cancel if sender is token2 sender", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { token, marketplaceManager } = context.suite;
+      const { aliceWallet, bobWallet } = context.accounts;
+
+      await token.connect(aliceWallet).approve(marketplaceManager.target, 50)
+      await expect(
+        marketplaceManager.connect(aliceWallet).initiateTransfer(token, 50, bobWallet, token, 20)
+      ).to.emit(marketplaceManager, "TransferInitiated");
+
+      const id = await marketplaceManager.connect(bobWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
+      await expect(
+        marketplaceManager.connect(bobWallet).cancelTransfer(id)
+      ).to.emit(marketplaceManager, "TransferCancelled").withArgs(id)
+    });
+
+    it("should cancel if sender is any token agent", async () => {
+      const context = await loadFixture(deployMarketplaceManager);
+      const { token, marketplaceManager } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+
+      await token.connect(aliceWallet).approve(marketplaceManager.target, 50)
+      await expect(
+        marketplaceManager.connect(aliceWallet).initiateTransfer(token, 50, bobWallet, token, 20)
+      ).to.emit(marketplaceManager, "TransferInitiated");
+
+      const id = await marketplaceManager.connect(tokenAgent).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
+      await expect(
+        marketplaceManager.connect(tokenAgent).cancelTransfer(id)
+      ).to.emit(marketplaceManager, "TransferCancelled").withArgs(id)
+    });
+  });
 });

@@ -114,7 +114,7 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
      *  @param _fee2Wallet wallet address receiving fees applied on `_token2`
      *  @notice
      *  `_token1` and `_token2` has to be ERC20 or ERC3643 token addresses, otherwise the transaction will fail
-     *  `msg.sender` has to be owner of the marketplace contract or the owner of ERC3643 token involved in the parity (if any)
+     *  `msg.sender` has to be owner of ERC3643 token involved in the parity (if any)
      *  requires fees to be lower than 100%
      *  requires `_feeBase` to be higher or equal to 2 (precision 10^2)
      *  requires `_feeBase` to be lower or equal to 5 (precision 10^5) to avoid overflows
@@ -131,7 +131,6 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         address _fee1Wallet,
         address _fee2Wallet) external {
         require(
-            msg.sender == owner() ||
             isTokenOwner(_token1, msg.sender) ||
             isTokenOwner(_token2, msg.sender)
             , "Ownable: only owner can call");
@@ -262,7 +261,7 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         require(token2Contract.balanceOf(token2.sender) >= token2.amount, "not enough tokens in balance");
         require(token2Contract.allowance(token2.sender, address(this)) >= token2.amount,
             "not enough allowance to transfer");
-            
+
         TxFees memory fees = computeFee(_transferID);
         token1Contract.transferFrom(token1.sender, token2.sender, (token1.amount - fees.txFee1));
         if (fees.txFee1 != 0) {
@@ -303,6 +302,7 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
             isTokenOwner(token2.token, token2.sender) &&
             isTokenAgent(token2.token, msg.sender)
             , "mint has to be executed by minting token agent and minting token owner has to be taker");
+        
         TxFees memory fees = computeFee(_transferID);
         token1Contract.transferFrom(token1.sender, token2.sender, (token1.amount - fees.txFee1));
         if (fees.txFee1 != 0) {
@@ -364,7 +364,7 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
      *  the `computeTransferID` function for the initiated transfer to delete
      *  @notice
      *  requires `_transferID` to exist (transfer has to be initiated)
-     *  requires that `msg.sender` is the taker or the maker or owner of the `MarketplaceManager` contract
+     *  requires that `msg.sender` is the taker or the maker
      *  or the ERC3643 agent in case an ERC3643 token is involved in the transfer
      *  once the `cancelTransfer` is executed the `_transferID` is removed from the pending `_transferID` pool
      *  emits a `TransferCancelled` event
@@ -376,7 +376,6 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         require (
             msg.sender == token1.sender ||
             msg.sender == token2.sender ||
-            msg.sender == owner() ||
             isTokenAgent(token1.token, msg.sender) ||
             isTokenAgent(token2.token, msg.sender)
             , "you are not allowed to cancel this transfer");
