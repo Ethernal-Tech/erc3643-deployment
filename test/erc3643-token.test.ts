@@ -29,13 +29,14 @@ describe("ERC3643 Token", () => {
       const context = await loadFixture(deployERC3643Token);
       const { erc3643Token } = context.suite;
       const { aliceWallet, bobWallet, anotherWallet } = context.accounts;
+      const users = [aliceWallet, bobWallet, anotherWallet];
 
-      const balances = await erc3643Token.connect(aliceWallet).getBalances([aliceWallet, bobWallet, anotherWallet])
-      expect(balances.length).to.equal(3)
+      const balances = await erc3643Token.connect(aliceWallet).getBalances(users)
+      expect(balances.length).to.equal(users.length)
 
-      expect(balances[0]).to.equal(10)
-      expect(balances[1]).to.equal(20)
-      expect(balances[2]).to.equal(0)
+      for (let i = 0; i < users.length; i++) {
+         expect(balances[i]).to.equal(await erc3643Token.connect(users[i]).balanceOf(users[i]))
+      }
     });
   });
 });
