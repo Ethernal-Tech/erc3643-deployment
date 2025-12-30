@@ -1,7 +1,6 @@
 import { task } from "hardhat/config";
 import TRex from "@tokenysolutions/t-rex";
 import addresses from "../addresses-folion.json";
-import ERC3643Token from "../artifacts/contracts/token/ERC3643Token.sol/ERC3643Token.json";
 
 task("transfer", "Transfers from sender to receiver")
   .addParam("sender", "Sender private key")
@@ -24,7 +23,7 @@ task("transfer", "Transfers from sender to receiver")
     const tokenAgent = signers[3];
 
     const token = await hre.ethers.getContractAt(
-      ERC3643Token.abi,
+      TRex.contracts.Token.abi,
       tokenAddress,
       tokenAgent
     );

@@ -1,7 +1,6 @@
 import { task } from "hardhat/config";
 import TRex from "@tokenysolutions/t-rex";
 import { expect } from "chai";
-import ERC3643Token from "../artifacts/contracts/token/ERC3643Token.sol/ERC3643Token.json";
 
 task("mint-token", "Mints and unpauses a T-Rex token")
   .addParam("user", "Recipient address")
@@ -19,7 +18,7 @@ task("mint-token", "Mints and unpauses a T-Rex token")
     const tokenAgent = signers[3];
 
     const token = await hre.ethers.getContractAt(
-      ERC3643Token.abi,
+      TRex.contracts.Token.abi,
       tokenAddress,
       tokenAgent
     );
