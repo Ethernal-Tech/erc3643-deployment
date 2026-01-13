@@ -7,6 +7,7 @@ import CountryPermitModule from "../artifacts/contracts/compliance/CountryPermit
 import CountryRestrictModule from "../artifacts/contracts/compliance/CountryRestrictModule.sol/CountryRestrictModule.json";
 import MaxBalanceModule from "../artifacts/contracts/compliance/MaxBalanceModule.sol/MaxBalanceModule.json";
 import MaxTotalSupplyModule from "../artifacts/contracts/compliance/MaxTotalSupplyModule.sol/MaxTotalSupplyModule.json";
+import MinInvestmentModule from "../artifacts/contracts/compliance/MinInvestmentModule.sol/MinInvestmentModule.json";
 import LockInTransferModule from "../artifacts/contracts/compliance/LockInTransferModule.sol/LockInTransferModule.json";
 import TransferPermitModule from "../artifacts/contracts/compliance/TransferPermitModule.sol/TransferPermitModule.json";
 import MarketplaceManager from "../artifacts/contracts/marketplace/MarketplaceManager.sol/MarketplaceManager.json";
@@ -239,6 +240,29 @@ async function main() {
     await maxTotalSupplyModuleProxy.getAddress()
   );
 
+  // MinInvestmentModule
+  const minInvestmentModule = await new ethers.ContractFactory(
+    MinInvestmentModule.abi,
+    MinInvestmentModule.bytecode,
+    deployer
+  ).deploy();
+  await minInvestmentModule.waitForDeployment();
+
+  const minInvestmentModuleProxy = await new ethers.ContractFactory(
+    TRex.contracts.ModuleProxy.abi,
+    TRex.contracts.ModuleProxy.bytecode,
+    deployer
+  ).deploy(
+    await minInvestmentModule.getAddress(),
+    minInvestmentModule.interface.encodeFunctionData("initialize")
+  );
+  await minInvestmentModuleProxy.waitForDeployment();
+
+  console.log(
+    "Min Investment Module Proxy ->",
+    await minInvestmentModuleProxy.getAddress()
+  );
+
   // LockInTransferModule
   const lockInTransferModule = await new ethers.ContractFactory(
     LockInTransferModule.abi,
@@ -336,6 +360,7 @@ async function main() {
     countryRestrictModule: await countryRestrictModuleProxy.getAddress(),
     maxBalanceModule: await maxBalanceModuleProxy.getAddress(),
     maxTotalSupplyModule: await maxTotalSupplyModuleProxy.getAddress(),
+    minInvestmentModule: await minInvestmentModuleProxy.getAddress(),
     lockInTransferModule: await lockInTransferModuleProxy.getAddress(),
     transferPermitModule: await transferPermitModuleProxy.getAddress(),
     marketplaceManager: await marketplaceManagerProxy.getAddress(),

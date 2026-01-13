@@ -1,12 +1,13 @@
 {
   "trexGateway": "0x9A676e781A523b5d0C0e43731313A708CB607508",
   "gateway": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-  "identityRegistryStorage": "0x84eA74d481Ee0A5332c457a4d796187F6Ba67fEB",
+  "identityRegistryStorage": "0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9",
   "countryPermitModule": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
   "countryRestrictModule": "0x59b670e9fA9D0A427751Af201D676719a970857b",
   "maxBalanceModule": "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
   "maxTotalSupplyModule": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
-  "lockInTransferModule": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
-  "transferPermitModule": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
-  "marketplaceManager": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690"
+  "minInvestmentModule": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+  "lockInTransferModule": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
+  "transferPermitModule": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
+  "marketplaceManager": "0x9E545E3C0baAB3E08CdfD552C960A1050f373042"
 }
