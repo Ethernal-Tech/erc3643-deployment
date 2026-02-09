@@ -11,7 +11,7 @@ contract MinInvestmentModule is AbstractModuleUpgradeable {
     mapping(address => uint256) private _minInvestments;
 
     /// accounts invested per modular compliance contract
-    mapping(address => bool) private _accountsInvested;
+    mapping(address => mapping(address => bool)) private _accountsInvested;
 
     /**
      *  this event is emitted when the min investment has been set.
@@ -41,16 +41,16 @@ contract MinInvestmentModule is AbstractModuleUpgradeable {
 
     /**
      *  @dev See {IModule-moduleTransferAction}.
-     *  no transfer action required in this module
      */
-    // solhint-disable-next-line no-empty-blocks
-    function moduleTransferAction(address _from, address _to, uint256 _value) external onlyComplianceCall {}
+    function moduleTransferAction(address /*_from*/, address _to, uint256 /*_value*/) external onlyComplianceCall {
+        _accountsInvested[msg.sender][_to] = true;
+    }
 
     /**
      *  @dev See {IModule-moduleMintAction}.
      */
-    function moduleMintAction(address _to, uint256 _value) external onlyComplianceCall {
-        _accountsInvested[_to] = true;
+    function moduleMintAction(address _to, uint256 /*_value*/) external onlyComplianceCall {
+        _accountsInvested[msg.sender][_to] = true;
     }
 
     /**
@@ -64,12 +64,12 @@ contract MinInvestmentModule is AbstractModuleUpgradeable {
      *  @dev See {IModule-moduleCheck}.
      */
     function moduleCheck(
-        address _from,
+        address /*_from*/,
         address _to,
         uint256 _value,
         address _compliance
     ) external view override returns (bool) {
-        if (_from == address(0) && _value < _minInvestments[_compliance] && !_accountsInvested[_to]) {
+        if (_value < _minInvestments[_compliance] && !_accountsInvested[_compliance][_to]) {
             return false;
         }
         return true;

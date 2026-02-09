@@ -126,7 +126,7 @@ describe("Compliance Module: MinInvestment", () => {
   });
 
   describe(".moduleCheck", () => {
-    it("should work when not minting", async () => {
+    it("should work when at least min investment is transferred", async () => {
       const context = await loadFixture(deployMinInvestmentModule);
 
       const { compliance, minInvestmentModule } = context.suite;
@@ -200,6 +200,30 @@ describe("Compliance Module: MinInvestment", () => {
     });
   });
 
+  it("should revert or return false when transfer is below min investment", async () => {
+    const context = await loadFixture(deployMinInvestmentModule);
+
+    const { compliance, minInvestmentModule } = context.suite;
+    const { aliceWallet, bobWallet } = context.accounts;
+
+    await expect(compliance
+      .callModuleFunction(
+        new ethers.Interface([
+          "function setMinInvestment(uint256)",
+        ]).encodeFunctionData("setMinInvestment", [50]),
+        minInvestmentModule.target
+      )).to.not.be.reverted;
+
+    await expect(
+      minInvestmentModule.moduleCheck(
+        bobWallet.address,
+        aliceWallet.address,
+        30,
+        compliance.target
+      )
+    ).to.eventually.false;
+  });
+
   it("should work for invest more mints", async () => {
     const context = await loadFixture(deployMinInvestmentModule);
 
@@ -229,6 +253,41 @@ describe("Compliance Module: MinInvestment", () => {
     await expect(
       minInvestmentModule.moduleCheck(
         ethers.ZeroAddress,
+        aliceWallet.address,
+        10,
+        compliance.target
+      )
+    ).to.eventually.true;
+  });
+
+  it("should work for invest more transfers", async () => {
+    const context = await loadFixture(deployMinInvestmentModule);
+
+    const { compliance, minInvestmentModule } = context.suite;
+    const { aliceWallet, bobWallet } = context.accounts;
+    await expect(compliance
+      .callModuleFunction(
+        new ethers.Interface([
+          "function setMinInvestment(uint256)",
+        ]).encodeFunctionData("setMinInvestment", [50]),
+        minInvestmentModule.target
+      )).to.not.be.reverted;
+
+    // first mint to alice at min investment
+    await expect(compliance.callModuleFunction(
+      new ethers.Interface([
+        "function moduleMintAction(address,uint256)",
+      ]).encodeFunctionData("moduleMintAction", [
+        aliceWallet.address,
+        50,
+      ]),
+      minInvestmentModule.target
+    )).to.emit(compliance, "ModuleInteraction");
+
+    // transfer more to alice below min investment after she has already invested
+    await expect(
+      minInvestmentModule.moduleCheck(
+        bobWallet.address,
         aliceWallet.address,
         10,
         compliance.target

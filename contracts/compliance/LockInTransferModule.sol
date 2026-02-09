@@ -56,11 +56,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      *  @dev See {IModule-moduleTransferAction}.
      *  adds transfer limit for receiver and remove transfer limit for sender
      */
-    function moduleTransferAction(
-        address _from,
-        address _to,
-        uint256 _value
-    ) external override onlyComplianceCall {
+    function moduleTransferAction(address _from, address _to, uint256 _value) external override onlyComplianceCall {
         // Remove transfer limit for sender
         _dequeueTransferLimit(msg.sender, _from, _value);
         // Add transfer limit for receiver
@@ -70,20 +66,14 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
     /**
      *  @dev See {IModule-moduleMintAction}.
      */
-    function moduleMintAction(
-        address _to,
-        uint256 _value
-    ) external override onlyComplianceCall {
+    function moduleMintAction(address _to, uint256 _value) external override onlyComplianceCall {
         _enqueueTransferLimit(msg.sender, _to, _value);
     }
 
     /**
      *  @dev See {IModule-moduleBurnAction}.
      */
-    function moduleBurnAction(
-        address _from,
-        uint256 _value
-    ) external override onlyComplianceCall {
+    function moduleBurnAction(address _from, uint256 _value) external override onlyComplianceCall {
         Queue storage queue = _transferLimits[msg.sender][_from];
         queue.balance -= _value;
     }
@@ -119,9 +109,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
     /**
      *  @dev See {IModule-canComplianceBind}.
      */
-    function canComplianceBind(
-        address /*_compliance*/
-    ) external view returns (bool) {
+    function canComplianceBind(address /*_compliance*/) external view returns (bool) {
         return true;
     }
 
@@ -154,11 +142,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      *  @param _receiver receiver address
      *  @param _amount the amount to be enqueued
      */
-    function _enqueueTransferLimit(
-        address _compliance,
-        address _receiver,
-        uint256 _amount
-    ) private {
+    function _enqueueTransferLimit(address _compliance, address _receiver, uint256 _amount) private {
         if (_receiver == address(0)) {
             return;
         }
@@ -175,11 +159,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      *  @param _sender sender address
      *  @param _amount the amount to be dequeued
      */
-    function _dequeueTransferLimit(
-        address _compliance,
-        address _sender,
-        uint256 _amount
-    ) private {
+    function _dequeueTransferLimit(address _compliance, address _sender, uint256 _amount) private {
         if (_sender == address(0)) {
             return; // no dequeue for mint
         }
