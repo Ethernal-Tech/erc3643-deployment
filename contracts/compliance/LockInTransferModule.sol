@@ -15,10 +15,10 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
 
     /// Queue data structure to hold transfer limits
     struct Queue {
-        uint256 start;
-        uint256 end;
+        uint128 start;
+        uint128 end;
         uint256 balance;
-        mapping(uint256 => TransferLimit) items;
+        mapping(uint128 => TransferLimit) items;
     }
 
     /// transfer limits per compliance contract and user address
@@ -78,24 +78,28 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      */
     function moduleBurnAction(address _from, uint256 _value) external override onlyComplianceCall {
         Queue storage queue = _transferLimits[msg.sender][_from];
-        if (queue.balance > 0) {
-            if (queue.balance <= _value) {
-                // if burn amount is greater than or equal to locked balance, reset the queue
-                queue.balance = 0;
-                _resetQueue(queue);
-            } else {
-                // if burn amount is less than locked balance, reduce the locked balance by burn amount
-                // iterate through the queue from the end and remove latest transfer limits
-                // until the burn amount is fully applied
-                queue.balance -= _value;
-                for (uint256 i = queue.end - 1; i >= queue.start; i--) {
-                    if (queue.items[i].amount <= _value) {
-                        _value -= queue.items[i].amount;
-                        queue.end--;
-                    } else {
-                        queue.items[i].amount -= _value;
-                        break; // burn amount has been fully applied, stop iterating
-                    }
+        uint256 lockedBalance = queue.balance;
+        if (lockedBalance == 0) {
+            return; // queue is empty
+        }
+
+        // locked balance is not 0, apply burn amount to reduce locked balance
+        if (lockedBalance <= _value) {
+            // burn amount can fully cover locked balance, reset the queue
+            _resetQueue(queue);
+        } else {
+            // burn amount is less than locked balance, reduce the locked balance by burn amount
+            // iterate through the queue from the end and remove latest transfer limits
+            // until the burn amount is fully applied
+            queue.balance -= _value;
+            for (uint128 i = queue.end - 1; i >= queue.start; i--) {
+                uint256 itemAmount = queue.items[i].amount;
+                if (itemAmount <= _value) {
+                    _value -= itemAmount;
+                } else {
+                    queue.items[i].amount = itemAmount - _value;
+                    queue.end = i + 1;
+                    break; // burn amount has been fully applied, stop iterating
                 }
             }
         }
@@ -115,15 +119,16 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         }
 
         Queue storage queue = _transferLimits[_compliance][_from];
-        if (queue.balance == 0) {
+        uint256 lockedBalance = queue.balance;
+        if (lockedBalance == 0) {
             return true; // queue is empty, no transfer limit for sender
         }
 
-        uint256 lockedBalance = queue.balance;
         // calculate the total unlocked amount for sender by iterating through the queue
-        for (uint256 i = queue.start; i < queue.end; i++) {
-            if (queue.items[i].lockedUntil <= block.timestamp) {
-                lockedBalance -= queue.items[i].amount;
+        for (uint128 i = queue.start; i < queue.end; i++) {
+            TransferLimit memory item = queue.items[i]; // load item into memory to avoid multiple storage reads
+            if (item.lockedUntil <= block.timestamp) {
+                lockedBalance -= item.amount;
             } else {
                 break; // stop iterating once we reach an item that is still locked
             }
@@ -164,6 +169,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
     function _resetQueue(Queue storage _queue) private {
         _queue.start = 0;
         _queue.end = 0;
+        _queue.balance = 0;
     }
 
     /**
@@ -194,21 +200,24 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         }
 
         Queue storage queue = _transferLimits[_compliance][_sender];
-        if (queue.balance == 0) {
+        uint256 lockedBalance = queue.balance;
+        if (lockedBalance == 0) {
             return; // queue is empty
         }
 
-        for (uint256 i = queue.start; i < queue.end; i++) {
-            if (queue.items[i].lockedUntil <= block.timestamp) {
-                queue.balance -= queue.items[i].amount;
-                queue.start++;
+        for (uint128 i = queue.start; i < queue.end; i++) {
+            TransferLimit memory item = queue.items[i]; // load item into memory to avoid multiple storage reads
+            if (item.lockedUntil <= block.timestamp) {
+                lockedBalance -= item.amount;
             } else {
+                queue.balance = lockedBalance;
+                queue.start = i;
                 break; // stop iterating once we reach an item that is still locked
             }
         }
 
         // reset queue if all items have been dequeued
-        if (queue.balance == 0) { 
+        if (lockedBalance == 0) { 
             _resetQueue(queue);
         }
     }
