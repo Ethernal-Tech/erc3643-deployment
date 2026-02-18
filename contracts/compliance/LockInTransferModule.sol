@@ -98,7 +98,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
 
         uint256 total = 0;
         for (uint256 i = queue.start; i < queue.end; i++) {
-            if (queue.items[i].untilTimestamp >= block.timestamp) {
+            if (queue.items[i].untilTimestamp > block.timestamp) {
                 total += queue.items[i].amount;
             }
         }
@@ -171,7 +171,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
 
         bool doResetQueue = true;
         for (uint256 i = queue.start; i < queue.end; i++) {
-            if (queue.items[i].untilTimestamp >= block.timestamp) {
+            if (queue.items[i].untilTimestamp > block.timestamp) {
                 doResetQueue = false;
                 queue.start = i;
                 break;
