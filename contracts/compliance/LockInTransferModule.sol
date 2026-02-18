@@ -29,7 +29,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      *  this event is emitted when the wait period has been set.
      *  the event is emitted by 'setWaitPeriod' function.
      *  `_compliance` is the modular compliance contract address.
-     *  `_value` is the wait period in blocks.
+     *  `_value` is the wait period in seconds.
      */
     event WaitPeriod(address _compliance, uint256 _value);
 
