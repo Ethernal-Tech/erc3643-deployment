@@ -1,4 +1,4 @@
-import { loadFixture, mine } from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { deployComplianceFixture } from "./fixtures/deploy-compliance.fixture";
@@ -137,26 +137,21 @@ describe("Compliance Module: LockInTransfer", () => {
     it("should work after elapsed time - mint", async () => {
       const context = await loadFixture(deployLockInTransferModule);
 
-      const { compliance, lockInModule } = context.suite;
-      const { aliceWallet, bobWallet } = context.accounts;
+      const { token, compliance, lockInModule } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+      const waitPeriod = 1;
 
       await expect(compliance
         .callModuleFunction(
           new ethers.Interface([
             "function setWaitPeriod(uint256)",
-          ]).encodeFunctionData("setWaitPeriod", [1]),
+          ]).encodeFunctionData("setWaitPeriod", [waitPeriod]),
           lockInModule.target
-        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, 1);
+        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, waitPeriod);
 
-      await compliance.callModuleFunction(
-        new ethers.Interface([
-          "function moduleMintAction(address,uint256)",
-        ]).encodeFunctionData("moduleMintAction", [aliceWallet.address, 50]),
-        lockInModule.target
-      );
-
-      // mine 2 blocks to ensure the wait period has elapsed
-      await mine(2);
+      // mint and then increase time to ensure mint lock is expired before transfer
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await time.increase(waitPeriod);
 
       await expect(
         lockInModule.moduleCheck(
@@ -171,30 +166,24 @@ describe("Compliance Module: LockInTransfer", () => {
     it("should work after elapsed time - transfer", async () => {
       const context = await loadFixture(deployLockInTransferModule);
 
-      const { compliance, lockInModule } = context.suite;
-      const { aliceWallet, bobWallet } = context.accounts;
+      const { token, compliance, lockInModule } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+      const waitPeriod = 1;
 
       await expect(compliance
         .callModuleFunction(
           new ethers.Interface([
             "function setWaitPeriod(uint256)",
-          ]).encodeFunctionData("setWaitPeriod", [1]),
+          ]).encodeFunctionData("setWaitPeriod", [waitPeriod]),
           lockInModule.target
-        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, 1);
+        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, waitPeriod);
 
-      await compliance.callModuleFunction(
-        new ethers.Interface([
-          "function moduleTransferAction(address,address,uint256)",
-        ]).encodeFunctionData("moduleTransferAction", [
-          aliceWallet.address,
-          bobWallet.address,
-          50,
-        ]),
-        lockInModule.target
-      );
-
-      // mine 2 blocks to ensure the wait period has elapsed
-      await mine(2);
+      // mint and unpause to allow transfer, then increase time to ensure mint lock is expired before transfer
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await token.connect(tokenAgent).unpause();
+      await time.increase(waitPeriod);
+      await token.connect(aliceWallet).transfer(bobWallet.address, 50);
+      await time.increase(waitPeriod);
 
       await expect(
         lockInModule.moduleCheck(
@@ -209,23 +198,19 @@ describe("Compliance Module: LockInTransfer", () => {
     it("should revert or return false when sender has locked balance - mint", async () => {
       const context = await loadFixture(deployLockInTransferModule);
 
-      const { compliance, lockInModule } = context.suite;
-      const { aliceWallet, bobWallet } = context.accounts;
+      const { token, compliance, lockInModule } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+      const waitPeriod = 1;
 
       await expect(compliance
         .callModuleFunction(
           new ethers.Interface([
             "function setWaitPeriod(uint256)",
-          ]).encodeFunctionData("setWaitPeriod", [50]),
+          ]).encodeFunctionData("setWaitPeriod", [waitPeriod]),
           lockInModule.target
-        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, 50);
+        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, waitPeriod);
         
-      await compliance.callModuleFunction(
-        new ethers.Interface([
-          "function moduleMintAction(address,uint256)",
-        ]).encodeFunctionData("moduleMintAction", [aliceWallet.address, 50]),
-        lockInModule.target
-      );
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
 
       // after mint alice can't execute transfer
       await expect(
@@ -241,27 +226,23 @@ describe("Compliance Module: LockInTransfer", () => {
     it("should revert or return false when sender has locked balance - transfer", async () => {
       const context = await loadFixture(deployLockInTransferModule);
 
-      const { compliance, lockInModule } = context.suite;
-      const { aliceWallet, bobWallet } = context.accounts;
+      const { token, compliance, lockInModule } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+      const waitPeriod = 1;
 
       await expect(compliance
         .callModuleFunction(
           new ethers.Interface([
             "function setWaitPeriod(uint256)",
-          ]).encodeFunctionData("setWaitPeriod", [50]),
+          ]).encodeFunctionData("setWaitPeriod", [waitPeriod]),
           lockInModule.target
-        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, 50);
-        
-      await compliance.callModuleFunction(
-        new ethers.Interface([
-          "function moduleTransferAction(address,address,uint256)",
-        ]).encodeFunctionData("moduleTransferAction", [
-          aliceWallet.address,
-          bobWallet.address,
-          50,
-        ]),
-        lockInModule.target
-      );
+        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, waitPeriod);
+
+      // mint and unpause to allow transfer, then increase time to ensure mint lock is expired before transfer
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await token.connect(tokenAgent).unpause();
+      await time.increase(waitPeriod);
+      await token.connect(aliceWallet).transfer(bobWallet.address, 50);
 
       // after receive bob can't execute transfer
       await expect(

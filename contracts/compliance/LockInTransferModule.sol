@@ -2,13 +2,15 @@
 
 pragma solidity 0.8.17;
 
+import "@tokenysolutions/t-rex/contracts/token/IToken.sol";
+import "@tokenysolutions/t-rex/contracts/compliance/modular/IModularCompliance.sol";
 import "@tokenysolutions/t-rex/contracts/compliance/modular/modules/AbstractModuleUpgradeable.sol";
 
 contract LockInTransferModule is AbstractModuleUpgradeable {    
     /// Transfer limit structure
     struct TransferLimit {
         uint256 amount;
-        uint256 untilTimestamp;
+        uint256 lockedUntil;
     }
 
     /// Queue data structure to hold transfer limits
@@ -57,9 +59,9 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      *  adds transfer limit for receiver and remove transfer limit for sender
      */
     function moduleTransferAction(address _from, address _to, uint256 _value) external override onlyComplianceCall {
-        // Remove transfer limit for sender
-        _dequeueTransferLimit(msg.sender, _from, _value);
-        // Add transfer limit for receiver
+        // remove expired transfer limits for sender, if any
+        _dequeueTransferLimit(msg.sender, _from);
+        // add new transfer limit for receiver
         _enqueueTransferLimit(msg.sender, _to, _value);
     }
 
@@ -67,6 +69,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      *  @dev See {IModule-moduleMintAction}.
      */
     function moduleMintAction(address _to, uint256 _value) external override onlyComplianceCall {
+        // add new transfer limit for receiver
         _enqueueTransferLimit(msg.sender, _to, _value);
     }
 
@@ -75,7 +78,27 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      */
     function moduleBurnAction(address _from, uint256 _value) external override onlyComplianceCall {
         Queue storage queue = _transferLimits[msg.sender][_from];
-        queue.balance -= _value;
+        if (queue.balance > 0) {
+            if (queue.balance <= _value) {
+                // if burn amount is greater than or equal to locked balance, reset the queue
+                queue.balance = 0;
+                _resetQueue(queue);
+            } else {
+                // if burn amount is less than locked balance, reduce the locked balance by burn amount
+                // iterate through the queue from the end and remove latest transfer limits
+                // until the burn amount is fully applied
+                queue.balance -= _value;
+                for (uint256 i = queue.end - 1; i >= queue.start; i--) {
+                    if (queue.items[i].amount <= _value) {
+                        _value -= queue.items[i].amount;
+                        queue.end--;
+                    } else {
+                        queue.items[i].amount -= _value;
+                        break; // burn amount has been fully applied, stop iterating
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -88,22 +111,29 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         address _compliance
     ) external view override returns (bool) {
         if (_from == address(0)) {
-            return true;
+            return true; // no transfer limit check for minting
         }
 
         Queue storage queue = _transferLimits[_compliance][_from];
-        if (queue.start == queue.end) {
-            return true;
+        if (queue.balance == 0) {
+            return true; // queue is empty, no transfer limit for sender
         }
 
-        uint256 total = 0;
+        uint256 lockedBalance = queue.balance;
+        // calculate the total unlocked amount for sender by iterating through the queue
         for (uint256 i = queue.start; i < queue.end; i++) {
-            if (queue.items[i].untilTimestamp > block.timestamp) {
-                total += queue.items[i].amount;
+            if (queue.items[i].lockedUntil <= block.timestamp) {
+                lockedBalance -= queue.items[i].amount;
+            } else {
+                break; // stop iterating once we reach an item that is still locked
             }
         }
 
-        return queue.balance - total >= _value;
+        if((IToken(IModularCompliance(_compliance).getTokenBound()).balanceOf(_from) - lockedBalance) < _value) {
+            return false; // sender's available balance is less than transfer amount
+        }
+
+        return true;
     }
 
     /**
@@ -144,7 +174,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      */
     function _enqueueTransferLimit(address _compliance, address _receiver, uint256 _amount) private {
         if (_receiver == address(0)) {
-            return;
+            return; // no enqueue for burn
         }
 
         Queue storage queue = _transferLimits[_compliance][_receiver];
@@ -157,31 +187,29 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      *  @dev dequeue transfer limit for a sender
      *  @param _compliance compliance contract address
      *  @param _sender sender address
-     *  @param _amount the amount to be dequeued
      */
-    function _dequeueTransferLimit(address _compliance, address _sender, uint256 _amount) private {
+    function _dequeueTransferLimit(address _compliance, address _sender) private {
         if (_sender == address(0)) {
             return; // no dequeue for mint
         }
 
         Queue storage queue = _transferLimits[_compliance][_sender];
-        if (queue.end == 0) {
+        if (queue.balance == 0) {
             return; // queue is empty
         }
 
-        bool doResetQueue = true;
         for (uint256 i = queue.start; i < queue.end; i++) {
-            if (queue.items[i].untilTimestamp > block.timestamp) {
-                doResetQueue = false;
-                queue.start = i;
-                break;
+            if (queue.items[i].lockedUntil <= block.timestamp) {
+                queue.balance -= queue.items[i].amount;
+                queue.start++;
+            } else {
+                break; // stop iterating once we reach an item that is still locked
             }
         }
 
-        if (doResetQueue) {
+        // reset queue if all items have been dequeued
+        if (queue.balance == 0) { 
             _resetQueue(queue);
         }
-
-        queue.balance -= _amount;
     }
 }
