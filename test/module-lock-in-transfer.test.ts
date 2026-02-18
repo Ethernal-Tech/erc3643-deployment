@@ -155,6 +155,7 @@ describe("Compliance Module: LockInTransfer", () => {
         lockInModule.target
       );
 
+      // mine 2 blocks to ensure the wait period has elapsed
       await mine(2);
 
       await expect(
@@ -192,6 +193,7 @@ describe("Compliance Module: LockInTransfer", () => {
         lockInModule.target
       );
 
+      // mine 2 blocks to ensure the wait period has elapsed
       await mine(2);
 
       await expect(

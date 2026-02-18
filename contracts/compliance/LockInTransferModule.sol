@@ -8,7 +8,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
     /// Transfer limit structure
     struct TransferLimit {
         uint256 amount;
-        uint256 untilBlock;
+        uint256 untilTimestamp;
     }
 
     /// Queue data structure to hold transfer limits
@@ -45,7 +45,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
      *  @dev set wait period for a compliance contract
      *  only a bound modular compliance contract can call this function
      *  emits a `WaitPeriod` event
-     *  @param _waitPeriod the wait period in blocks
+     *  @param _waitPeriod the wait period in seconds
      */
     function setWaitPeriod(uint256 _waitPeriod) external onlyComplianceCall {
         _waitPeriods[msg.sender] = _waitPeriod;
@@ -98,7 +98,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
 
         uint256 total = 0;
         for (uint256 i = queue.start; i < queue.end; i++) {
-            if (queue.items[i].untilBlock > block.number) {
+            if (queue.items[i].untilTimestamp >= block.timestamp) {
                 total += queue.items[i].amount;
             }
         }
@@ -148,7 +148,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         }
 
         Queue storage queue = _transferLimits[_compliance][_receiver];
-        queue.items[queue.end] = TransferLimit(_amount, block.number + _waitPeriods[_compliance]);
+        queue.items[queue.end] = TransferLimit(_amount, block.timestamp + _waitPeriods[_compliance]);
         queue.end++;
         queue.balance += _amount;
     }
@@ -171,7 +171,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
 
         bool doResetQueue = true;
         for (uint256 i = queue.start; i < queue.end; i++) {
-            if (queue.items[i].untilBlock >= block.number) {
+            if (queue.items[i].untilTimestamp >= block.timestamp) {
                 doResetQueue = false;
                 queue.start = i;
                 break;
