@@ -139,7 +139,7 @@ describe("Compliance Module: LockInTransfer", () => {
 
       const { token, compliance, lockInModule } = context.suite;
       const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
-      const waitPeriod = 1;
+      const waitPeriod = 5;
 
       await expect(compliance
         .callModuleFunction(
@@ -168,7 +168,7 @@ describe("Compliance Module: LockInTransfer", () => {
 
       const { token, compliance, lockInModule } = context.suite;
       const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
-      const waitPeriod = 1;
+      const waitPeriod = 5;
 
       await expect(compliance
         .callModuleFunction(
@@ -200,7 +200,7 @@ describe("Compliance Module: LockInTransfer", () => {
 
       const { token, compliance, lockInModule } = context.suite;
       const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
-      const waitPeriod = 1;
+      const waitPeriod = 5;
 
       await expect(compliance
         .callModuleFunction(
@@ -228,7 +228,7 @@ describe("Compliance Module: LockInTransfer", () => {
 
       const { token, compliance, lockInModule } = context.suite;
       const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
-      const waitPeriod = 1;
+      const waitPeriod = 5;
 
       await expect(compliance
         .callModuleFunction(
@@ -250,6 +250,167 @@ describe("Compliance Module: LockInTransfer", () => {
           bobWallet.address,
           aliceWallet.address,
           50,
+          compliance.target
+        )
+      ).to.eventually.false;
+    });
+  });
+
+  describe(".burn", () => {
+    it("should return false when all balance is locked after burn", async () => {
+      const context = await loadFixture(deployLockInTransferModule);
+
+      const { token, compliance, lockInModule } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+      const waitPeriod = 10;
+
+      await expect(compliance
+        .callModuleFunction(
+          new ethers.Interface([
+            "function setWaitPeriod(uint256)",
+          ]).encodeFunctionData("setWaitPeriod", [waitPeriod]),
+          lockInModule.target
+        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, waitPeriod);
+
+      // entire remaining balance is locked after burn, so transfer should be blocked
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await time.increase(waitPeriod / 2);
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await token.connect(tokenAgent).burn(aliceWallet.address, 25);
+
+      await expect(
+        lockInModule.moduleCheck(
+          aliceWallet.address,
+          bobWallet.address,
+          50,
+          compliance.target
+        )
+      ).to.eventually.false;
+    });
+
+    it("should return true when enough balance is unlocked after burn", async () => {
+      const context = await loadFixture(deployLockInTransferModule);
+
+      const { token, compliance, lockInModule } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+      const waitPeriod = 10;
+
+      await expect(compliance
+        .callModuleFunction(
+          new ethers.Interface([
+            "function setWaitPeriod(uint256)",
+          ]).encodeFunctionData("setWaitPeriod", [waitPeriod]),
+          lockInModule.target
+        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, waitPeriod);
+
+      // transfer only from the 1st mint, 1st mint is unlocked, 2nd mint is still locked
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await time.increase(waitPeriod / 2);
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await token.connect(tokenAgent).burn(aliceWallet.address, 25);
+      await time.increase(waitPeriod / 2);
+
+      await expect(
+        lockInModule.moduleCheck(
+          aliceWallet.address,
+          bobWallet.address,
+          50,
+          compliance.target
+        )
+      ).to.eventually.true;
+    });
+
+    it("should return false when not enough balance is unlocked after burn", async () => {
+      const context = await loadFixture(deployLockInTransferModule);
+
+      const { token, compliance, lockInModule } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+      const waitPeriod = 10;
+
+      await expect(compliance
+        .callModuleFunction(
+          new ethers.Interface([
+            "function setWaitPeriod(uint256)",
+          ]).encodeFunctionData("setWaitPeriod", [waitPeriod]),
+          lockInModule.target
+        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, waitPeriod);
+
+      // transfer all remaining balance, 1st mint is unlocked, 2nd mint is still locked
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await time.increase(waitPeriod / 2);
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await token.connect(tokenAgent).burn(aliceWallet.address, 25);
+      await time.increase(waitPeriod / 2);
+
+      await expect(
+        lockInModule.moduleCheck(
+          aliceWallet.address,
+          bobWallet.address,
+          75,
+          compliance.target
+        )
+      ).to.eventually.false;
+    });
+
+    it("should return true when all balance is unlocked after burn", async () => {
+      const context = await loadFixture(deployLockInTransferModule);
+
+      const { token, compliance, lockInModule } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+      const waitPeriod = 10;
+
+      await expect(compliance
+        .callModuleFunction(
+          new ethers.Interface([
+            "function setWaitPeriod(uint256)",
+          ]).encodeFunctionData("setWaitPeriod", [waitPeriod]),
+          lockInModule.target
+        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, waitPeriod);
+
+      // transfer all remaining balance, both mints are unlocked after burn
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await time.increase(waitPeriod);
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await token.connect(tokenAgent).burn(aliceWallet.address, 25);
+      await time.increase(waitPeriod);
+
+      await expect(
+        lockInModule.moduleCheck(
+          aliceWallet.address,
+          bobWallet.address,
+          75,
+          compliance.target
+        )
+      ).to.eventually.true;
+    });
+
+    it("should return false when there is not enough available balance after burn", async () => {
+      const context = await loadFixture(deployLockInTransferModule);
+
+      const { token, compliance, lockInModule } = context.suite;
+      const { aliceWallet, bobWallet, tokenAgent } = context.accounts;
+      const waitPeriod = 10;
+
+      await expect(compliance
+        .callModuleFunction(
+          new ethers.Interface([
+            "function setWaitPeriod(uint256)",
+          ]).encodeFunctionData("setWaitPeriod", [waitPeriod]),
+          lockInModule.target
+        )).to.emit(lockInModule, "WaitPeriod").withArgs(compliance.target, waitPeriod);
+
+      // transfer above total remaining balance after burn, all remaining balance is unlocked after burn
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await time.increase(waitPeriod);
+      await token.connect(tokenAgent).mint(aliceWallet.address, 50);
+      await token.connect(tokenAgent).burn(aliceWallet.address, 25);
+      await time.increase(waitPeriod);
+
+      await expect(
+        lockInModule.moduleCheck(
+          aliceWallet.address,
+          bobWallet.address,
+          100,
           compliance.target
         )
       ).to.eventually.false;
