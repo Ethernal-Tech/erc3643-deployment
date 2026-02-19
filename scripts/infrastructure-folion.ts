@@ -9,6 +9,7 @@ import MaxBalanceModule from "../artifacts/contracts/compliance/MaxBalanceModule
 import MaxTotalSupplyModule from "../artifacts/contracts/compliance/MaxTotalSupplyModule.sol/MaxTotalSupplyModule.json";
 import MinInvestmentModule from "../artifacts/contracts/compliance/MinInvestmentModule.sol/MinInvestmentModule.json";
 import LockInTransferModule from "../artifacts/contracts/compliance/LockInTransferModule.sol/LockInTransferModule.json";
+import GlobalLockInTransferModule from "../artifacts/contracts/compliance/GlobalLockInTransferModule.sol/GlobalLockInTransferModule.json";
 import TransferPermitModule from "../artifacts/contracts/compliance/TransferPermitModule.sol/TransferPermitModule.json";
 import MarketplaceManager from "../artifacts/contracts/marketplace/MarketplaceManager.sol/MarketplaceManager.json";
 import ERC3643Token from "../artifacts/contracts/token/ERC3643Token.sol/ERC3643Token.json";
@@ -286,6 +287,29 @@ async function main() {
     await lockInTransferModuleProxy.getAddress()
   );
 
+  // GlobalLockInTransferModule
+  const globalLockInTransferModule = await new ethers.ContractFactory(
+    GlobalLockInTransferModule.abi,
+    GlobalLockInTransferModule.bytecode,
+    deployer
+  ).deploy();
+  await globalLockInTransferModule.waitForDeployment();
+
+  const globalLockInTransferModuleProxy = await new ethers.ContractFactory(
+    TRex.contracts.ModuleProxy.abi,
+    TRex.contracts.ModuleProxy.bytecode,
+    deployer
+  ).deploy(
+    await globalLockInTransferModule.getAddress(),
+    globalLockInTransferModule.interface.encodeFunctionData("initialize")
+  );
+  await globalLockInTransferModuleProxy.waitForDeployment();
+
+  console.log(
+    "Global Lock In Transfer Module Proxy ->",
+    await globalLockInTransferModuleProxy.getAddress()
+  );
+
   // TransferPermitModule
   const transferPermitModule = await new ethers.ContractFactory(
     TransferPermitModule.abi,
@@ -362,6 +386,7 @@ async function main() {
     maxTotalSupplyModule: await maxTotalSupplyModuleProxy.getAddress(),
     minInvestmentModule: await minInvestmentModuleProxy.getAddress(),
     lockInTransferModule: await lockInTransferModuleProxy.getAddress(),
+    globalLockInTransferModule: await globalLockInTransferModuleProxy.getAddress(),
     transferPermitModule: await transferPermitModuleProxy.getAddress(),
     marketplaceManager: await marketplaceManagerProxy.getAddress(),
   };
