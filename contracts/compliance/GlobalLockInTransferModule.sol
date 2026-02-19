@@ -69,7 +69,7 @@ contract GlobalLockInTransferModule is AbstractModuleUpgradeable {
             return true;
         }
 
-        return _waitPeriods[_compliance] >= block.timestamp;
+        return _waitPeriods[_compliance] <= block.timestamp;
     }
 
     /**
