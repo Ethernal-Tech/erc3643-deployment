@@ -56,11 +56,15 @@ contract CountryPermitModule is AbstractCountryModule {
      *  @param _permissions permissions to be set for the countries, true to permit, false to disallow
      */
     function setCountriesPermission(uint16[] calldata _countries, bool[] calldata _permissions) external onlyComplianceCall {
-        for (uint256 i = 0; i < _countries.length; i++) {
+        for (uint256 i = 0; i < _countries.length;) {
             if (_permissions[i]) {
                 countryPermit(_countries[i]);
             } else {
                 removeCountryPermission(_countries[i]);
+            }
+
+            unchecked {
+                ++i; 
             }
         }
     }

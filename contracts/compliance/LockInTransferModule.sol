@@ -92,7 +92,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
             // iterate through the queue from the end and remove latest transfer limits
             // until the burn amount is fully applied
             queue.balance -= _value;
-            for (uint128 i = queue.end - 1; i >= queue.start; i--) {
+            for (uint128 i = queue.end - 1; i >= queue.start;) {
                 uint256 itemAmount = queue.items[i].amount;
                 if (itemAmount <= _value) {
                     _value -= itemAmount;
@@ -100,6 +100,10 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
                     queue.items[i].amount = itemAmount - _value;
                     queue.end = i + 1;
                     break; // burn amount has been fully applied, stop iterating
+                }
+
+                unchecked {
+                    --i;
                 }
             }
         }
@@ -125,12 +129,16 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
         }
 
         // calculate the total unlocked amount for sender by iterating through the queue
-        for (uint128 i = queue.start; i < queue.end; i++) {
+        for (uint128 i = queue.start; i < queue.end;) {
             TransferLimit memory item = queue.items[i]; // load item into memory to avoid multiple storage reads
             if (item.lockedUntil <= block.timestamp) {
                 lockedBalance -= item.amount;
             } else {
                 break; // stop iterating once we reach an item that is still locked
+            }
+
+            unchecked {
+                ++i;
             }
         }
 
@@ -185,7 +193,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
 
         Queue storage queue = _transferLimits[_compliance][_receiver];
         queue.items[queue.end] = TransferLimit(_amount, block.timestamp + _waitPeriods[_compliance]);
-        queue.end++;
+        ++queue.end;
         queue.balance += _amount;
     }
 
@@ -205,7 +213,7 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
             return; // queue is empty
         }
 
-        for (uint128 i = queue.start; i < queue.end; i++) {
+        for (uint128 i = queue.start; i < queue.end;) {
             TransferLimit memory item = queue.items[i]; // load item into memory to avoid multiple storage reads
             if (item.lockedUntil <= block.timestamp) {
                 lockedBalance -= item.amount;
@@ -213,6 +221,10 @@ contract LockInTransferModule is AbstractModuleUpgradeable {
                 queue.balance = lockedBalance;
                 queue.start = i;
                 break; // stop iterating once we reach an item that is still locked
+            }
+
+            unchecked {
+                ++i;
             }
         }
 

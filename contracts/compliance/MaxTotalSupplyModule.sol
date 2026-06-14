@@ -18,6 +18,12 @@ contract MaxTotalSupplyModule is AbstractModuleUpgradeable {
     event MaxTotalSupplySet(address _compliance, uint256 _limit);
 
     /**
+     *  @dev error thrown when a new total supply limit is less than the old one
+     *  @param _limit new total supply limit to be set
+     */
+    error MaxTotalSupplyInvalidLimit(uint256 _limit);
+
+    /**
      * @dev initializes the contract and sets the initial state.
      * @notice This function should only be called once during the contract deployment.
      */
@@ -34,7 +40,7 @@ contract MaxTotalSupplyModule is AbstractModuleUpgradeable {
      */
     function setMaxTotalSupply(uint256 _limit) external onlyComplianceCall {
         if (_limit < IToken(IModularCompliance(msg.sender).getTokenBound()).totalSupply()) {
-            revert("new max total supply lower than current total supply");
+            revert MaxTotalSupplyInvalidLimit(_limit);
         }
         _maxTotalSupplies[msg.sender] = _limit;
         emit MaxTotalSupplySet(msg.sender, _limit);

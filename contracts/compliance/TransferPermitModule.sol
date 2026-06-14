@@ -8,7 +8,7 @@ import "@tokenysolutions/t-rex/contracts/compliance/modular/modules/AbstractModu
 
 contract TransferPermitModule is AbstractModuleUpgradeable {
     /// permitted transfers per modular compliance contract
-    mapping(address => mapping(bytes32 => uint)) private _transfersPermitted;
+    mapping(address => mapping(bytes32 => uint256)) private _transfersPermitted;
 
     /**
      *  this event is emitted whenever a transfer is permitted.
@@ -18,7 +18,7 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
      *  `_amount` is the token amount to be sent.
      *  `_token` is address of the token taking part in the transfer.
      */
-    event TransferPermitted(address _from, address _to, uint _amount, address _token);
+    event TransferPermitted(address _from, address _to, uint256 _amount, address _token);
 
     /**
      *  this event is emitted whenever a transfer permission is removed.
@@ -28,7 +28,7 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
      *  `_amount` is the token amount to be sent.
      *  `_token` is address of the token taking part in the transfer.
      */
-    event TransferPermissionRemoved(address _from, address _to, uint _amount, address _token);
+    event TransferPermissionRemoved(address _from, address _to, uint256 _amount, address _token);
 
     /**
      *  @dev error thrown when a transfer is not permitted
@@ -36,7 +36,7 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
      *  @param _to address of the transfer recipient
      *  @param _amount token amount to be sent
      */
-    error TransferNotPermitted(address _from, address _to, uint _amount);
+    error TransferNotPermitted(address _from, address _to, uint256 _amount);
 
     /**
      * @dev initializes the contract and sets the initial state.
@@ -54,9 +54,9 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
      *  @param _to the address of the transfer receiver
      *  @param _amount the amount of tokens that `_from` would send to `_to`
      */
-    function transferPermit(address _from, address _to, uint _amount) public onlyComplianceCall {
+    function transferPermit(address _from, address _to, uint256 _amount) public onlyComplianceCall {
         bytes32 transferHash = _computeTransferHash(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
-        _transfersPermitted[msg.sender][transferHash]++;
+        ++_transfersPermitted[msg.sender][transferHash];
         emit TransferPermitted(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
     }
 
@@ -69,12 +69,12 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
      *  @param _to the address of the transfer receiver
      *  @param _amount the amount of tokens that `_from` was allowed to send to `_to`
      */
-    function removeTransferPermission(address _from, address _to, uint _amount) public onlyComplianceCall {
+    function removeTransferPermission(address _from, address _to, uint256 _amount) public onlyComplianceCall {
         bytes32 transferHash = _computeTransferHash(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
         if (_transfersPermitted[msg.sender][transferHash] == 0) {
             revert TransferNotPermitted(_from, _to, _amount);
         }
-        _transfersPermitted[msg.sender][transferHash]--;
+        --_transfersPermitted[msg.sender][transferHash];
         emit TransferPermissionRemoved(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
     }
 
@@ -86,10 +86,14 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
      *  @param _to the array of addresses of the transfer receivers
      *  @param _amount the array of tokens amounts that `_from` would send to `_to`
      */
-    function batchTransfersPermit(address[] calldata _from, address[] calldata _to, uint[] calldata _amount)
+    function batchTransfersPermit(address[] calldata _from, address[] calldata _to, uint256[] calldata _amount)
     external onlyComplianceCall {
-        for (uint256 i = 0; i < _from.length; i++){
+        for (uint256 i = 0; i < _from.length;){
             transferPermit(_from[i], _to[i], _amount[i]);
+        
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -102,10 +106,14 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
      *  @param _to the array of addresses of the transfer receivers
      *  @param _amount the array of token amounts that `_from` were allowed to send to `_to`
      */
-    function batchRemoveTransfersPermission(address[] calldata _from, address[] calldata _to, uint[] calldata _amount)
+    function batchRemoveTransfersPermission(address[] calldata _from, address[] calldata _to, uint256[] calldata _amount)
     external onlyComplianceCall {
-        for (uint256 i = 0; i < _from.length; i++){
+        for (uint256 i = 0; i < _from.length;){
             removeTransferPermission(_from[i], _to[i], _amount[i]);
+
+             unchecked {
+                ++i;
+            }
         }
     }
     
@@ -120,7 +128,7 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
         bytes32 transferHash = _computeTransferHash(_from, _to, _value, IModularCompliance(msg.sender).getTokenBound());
         // if the transfer is permitted, remove permission, otherwise do nothing (to allow forced transfers)
         if(_transfersPermitted[msg.sender][transferHash] > 0) {
-            _transfersPermitted[msg.sender][transferHash]--;
+            --_transfersPermitted[msg.sender][transferHash];
             emit TransferPermissionRemoved(_from, _to, _value, IModularCompliance(msg.sender).getTokenBound());
         }
     }
@@ -188,7 +196,7 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
     function _computeTransferHash (
         address _from,
         address _to,
-        uint _amount,
+        uint256 _amount,
         address _token
     ) internal pure returns (bytes32){
         return keccak256(abi.encode(_from, _to, _amount, _token));
