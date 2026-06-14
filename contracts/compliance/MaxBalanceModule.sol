@@ -15,7 +15,7 @@ contract MaxBalanceModule is AbstractModuleUpgradeable {
      *  `_compliance` is the modular compliance contract address.
      *  `_maxBalance` is the max amount of tokens that a user can hold.
      */
-    event MaxBalanceSet(address indexed _compliance, uint256 indexed _maxBalance);
+    event MaxBalanceSet(address _compliance, uint256 _maxBalance);
 
     /**
      * @dev initializes the contract and sets the initial state.

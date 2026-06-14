@@ -69,7 +69,7 @@ describe("Marketplace Manager", () => {
 
       await expect(
         marketplaceManager.connect(aliceWallet).initiateTransfer(token, 200, bobWallet, token, 20)
-      ).to.be.revertedWith("not enough tokens in balance");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidBalance");
     });
 
     it("should revert if sender (initiator) has no approved balance in favour of marketplace manager", async () => {
@@ -79,7 +79,7 @@ describe("Marketplace Manager", () => {
 
       await expect(
         marketplaceManager.connect(aliceWallet).initiateTransfer(token, 50, bobWallet, token, 20)
-      ).to.be.revertedWith("not enough allowance to initiate transfer");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidAllowance");
     });
 
     it("should revert if counterpart address is 0", async () => {
@@ -92,7 +92,7 @@ describe("Marketplace Manager", () => {
 
       await expect(
         marketplaceManager.connect(aliceWallet).initiateTransfer(token, 50, ethers.ZeroAddress, token, 20)
-      ).to.be.revertedWith("counterpart address cannot be null");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidCounterpart");
     });
 
     it("should revert if token2 is not an ERC20", async () => {
@@ -130,7 +130,7 @@ describe("Marketplace Manager", () => {
 
       await expect(
         marketplaceManager.connect(bobWallet).takeTransfer(ethers.encodeBytes32String("0"))
-      ).to.be.revertedWith("transfer ID does not exist");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidTransfer");
     });
 
     it("should revert if sender (taker) is not a counterpart user", async () => {
@@ -147,7 +147,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
       await expect(
         marketplaceManager.connect(aliceWallet).takeTransfer(id)
-      ).to.be.revertedWith("transfer has to be executed by the counterpart or by token agent");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidTransferTaker");
     });
 
     it("should revert if sender (taker) has no enough balance", async () => {
@@ -164,7 +164,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(bobWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 200)
       await expect(
         marketplaceManager.connect(bobWallet).takeTransfer(id)
-      ).to.be.revertedWith("not enough tokens in balance");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidBalance");
     });
 
     it("should revert if sender (taker) has no approved balance in favour of marketplace manager", async () => {
@@ -181,7 +181,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(bobWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
       await expect(
         marketplaceManager.connect(bobWallet).takeTransfer(id)
-      ).to.be.revertedWith("not enough allowance to transfer");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidAllowance");
     });
 
     it("should execute transfer properly", async () => {
@@ -212,7 +212,7 @@ describe("Marketplace Manager", () => {
 
       await expect(
         marketplaceManager.connect(bobWallet).takeMintTransfer(ethers.encodeBytes32String("0"))
-      ).to.be.revertedWith("transfer ID does not exist");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidTransfer");
     });
 
     it("should revert if taker is not a minting token owner", async () => {
@@ -229,7 +229,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
       await expect(
         marketplaceManager.connect(tokenAgent).takeMintTransfer(id)
-      ).to.be.revertedWith("mint has to be executed by minting token agent and minting token owner has to be taker");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidMintTaker");
     });
 
     it("should revert if sender is not a minting token agent", async () => {
@@ -246,7 +246,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, deployer, token, 20)
       await expect(
         marketplaceManager.connect(bobWallet).takeMintTransfer(id)
-      ).to.be.revertedWith("mint has to be executed by minting token agent and minting token owner has to be taker");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidMintTaker");
     });
 
     it("should execute mint properly", async () => {
@@ -275,7 +275,7 @@ describe("Marketplace Manager", () => {
 
       await expect(
         marketplaceManager.connect(bobWallet).takeBurnTransfer(ethers.encodeBytes32String("0"))
-      ).to.be.revertedWith("transfer ID does not exist");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidTransfer");
     });
 
     it("should revert if taker is not a burning token owner", async () => {
@@ -290,7 +290,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
       await expect(
         marketplaceManager.connect(tokenAgent).takeBurnTransfer(id)
-      ).to.be.revertedWith("burn has to be executed by burning token agent and burning token owner has to be taker");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidBurnTaker");
     });
 
     it("should revert if sender is not a burning token agent", async () => {
@@ -305,7 +305,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(aliceWallet).computeTransferID(0, aliceWallet, token, 50, deployer, token, 20)
       await expect(
         marketplaceManager.connect(bobWallet).takeBurnTransfer(id)
-      ).to.be.revertedWith("burn has to be executed by burning token agent and burning token owner has to be taker");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidBurnTaker");
     });
 
     it("should revert if sender (taker) has no enough balance", async () => {
@@ -320,7 +320,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(tokenAgent).computeTransferID(0, aliceWallet, token, 50, deployer, token, 200)
       await expect(
         marketplaceManager.connect(tokenAgent).takeBurnTransfer(id)
-      ).to.be.revertedWith("not enough tokens in balance");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidBalance");
     });
 
     it("should revert if sender (taker) has no approved balance in favour of marketplace manager", async () => {
@@ -335,7 +335,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(tokenAgent).computeTransferID(0, aliceWallet, token, 50, deployer, token, 20)
       await expect(
         marketplaceManager.connect(tokenAgent).takeTransfer(id)
-      ).to.be.revertedWith("not enough allowance to transfer");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidAllowance");
     });
 
     it("should execute burn properly", async () => {
@@ -364,7 +364,7 @@ describe("Marketplace Manager", () => {
 
       await expect(
         marketplaceManager.connect(bobWallet).cancelTransfer(ethers.encodeBytes32String("0"))
-      ).to.be.revertedWith("transfer ID does not exist");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidTransfer");
     });
 
     it("should revert if cancel is executed from unauthorized user ", async () => {
@@ -381,7 +381,7 @@ describe("Marketplace Manager", () => {
       const id = await marketplaceManager.connect(anotherWallet).computeTransferID(0, aliceWallet, token, 50, bobWallet, token, 20)
       await expect(
         marketplaceManager.connect(anotherWallet).cancelTransfer(id)
-      ).to.be.revertedWith("you are not allowed to cancel this transfer");
+      ).to.be.revertedWithCustomError(marketplaceManager, "InvalidTransferCanceller");
     });
 
     it("should cancel if sender is token1 sender", async () => {

@@ -56,11 +56,15 @@ contract CountryRestrictModule is AbstractCountryModule {
      *  @param _restrictions restrictions to be set for the countries, true to restrict, false to unrestrict
      */
     function setCountriesRestriction(uint16[] calldata _countries, bool[] calldata _restrictions) external onlyComplianceCall {
-        for (uint256 i = 0; i < _countries.length; i++) {
+        for (uint256 i = 0; i < _countries.length;) {
             if (_restrictions[i]) {
                 countryRestrict(_countries[i]);
             } else {
                 removeCountryRestriction(_countries[i]);
+            }
+
+            unchecked {
+                ++i; 
             }
         }
     }

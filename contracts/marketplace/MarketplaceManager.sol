@@ -19,17 +19,17 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
 
     /// contains transfer fee data for a given parity of tokens
     struct TransferFee {
-        uint token1Fee;
-        uint token2Fee;
-        uint feeBase;
+        uint256 token1Fee;
+        uint256 token2Fee;
+        uint256 feeBase;
         address fee1Wallet;
         address fee2Wallet;
     }
     
     /// contains computed tx fees for a given transfer
     struct TxFees {
-        uint txFee1;
-        uint txFee2;
+        uint256 txFee1;
+        uint256 txFee2;
         address fee1Wallet;
         address fee2Wallet;
     }
@@ -81,11 +81,92 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         bytes32 indexed parity,
         address token1,
         address token2,
-        uint fee1,
-        uint fee2,
-        uint feeBase,
+        uint256 fee1,
+        uint256 fee2,
+        uint256 feeBase,
         address fee1Wallet,
         address fee2Wallet);
+
+    /**
+     *  @dev error thrown when a caller is not a token ownder
+     *  @param _sender caller address
+     */
+    error OnlyTokenOwner(address _sender);
+
+    /**
+     *  @dev error thrown when a token is not an ERC20
+     *  @param _token token address
+     */
+    error InvalidTokenAddress(address _token);
+
+    /**
+     *  @dev error thrown when a fee wallet has an invalid address (0 for instance)
+     *  @param _feeWallet fee wallet address
+     */
+    error InvalidFeeWalletAddress(address _feeWallet);
+
+    /**
+     *  @dev error thrown when a fee settings is invalid
+     *  @param _fee1 token1 fee
+     *  @param _fee2 token2 fee
+     *  @param _feeBase precision of the fee settings
+     */
+    error InvalidFeeSettings(uint256 _fee1, uint256 _fee2, uint256 _feeBase);
+
+    /**
+     *  @dev error thrown when a transfer doesn't exist
+     *  @param _transferID transfer ID
+     */
+    error InvalidTransfer(bytes32 _transferID);
+
+    /**
+     *  @dev error thrown when an invalid sender executes transfer
+     *  @param _transferID transfer ID
+     *  @param _sender caller address
+     */
+    error InvalidTransferTaker(bytes32 _transferID, address _sender);
+
+    /**
+     *  @dev error thrown when an invalid sender executes mint
+     *  @param _transferID transfer ID
+     *  @param _sender caller address
+     */
+    error InvalidMintTaker(bytes32 _transferID, address _sender);
+
+    /**
+     *  @dev error thrown when an invalid sender executes burn
+     *  @param _transferID transfer ID
+     *  @param _sender caller address
+     */
+    error InvalidBurnTaker(bytes32 _transferID, address _sender);
+
+    /**
+     *  @dev error thrown when an invalid sender cancels transfer
+     *  @param _transferID transfer ID
+     *  @param _sender caller address
+     */
+    error InvalidTransferCanceller(bytes32 _transferID, address _sender);
+
+    /**
+     *  @dev error thrown when a caller doesn't have enough balance to execute the transfer
+     *  @param _transferID transfer ID
+     *  @param _sender caller address
+     *  @param _amount transfer amount
+     */
+    error InvalidBalance(bytes32 _transferID, address _sender, uint256 _amount);
+
+    /**
+     *  @dev error thrown when a caller doesn't have enough allowance to execute the transfer
+     *  @param _transferID transfer ID
+     *  @param _sender caller address
+     *  @param _amount allowance amount
+     */
+    error InvalidAllowance(bytes32 _transferID, address _sender, uint256 _amount);
+
+    /**
+     *  @dev error thrown when a counterpart user address is 0
+     */
+    error InvalidCounterpart();
 
     /**
      * @dev initializes the contract and sets the initial state.
@@ -108,7 +189,7 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
      *  @param _token2 address of the counterpart token for the parity `_token1`/`_token2`
      *  @param _fee1 the fee to apply on `_token1` leg of the transfer per 10^`_feeBase`
      *  @param _fee2 the fee to apply on `_token2` leg of the transfer per 10^`_feeBase`
-     *  @param _feeBase the precision of the fee setting, e.g.
+     *  @param _feeBase the precision of the fee settings, e.g.
      *  if `_feeBase` == 2 then `_fee1` and `_fee2` are in % (fee/10^`_feeBase`)
      *  @param _fee1Wallet wallet address receiving fees applied on `_token1`
      *  @param _fee2Wallet wallet address receiving fees applied on `_token2`
@@ -125,30 +206,30 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
     function setTransferFee(
         address _token1,
         address _token2,
-        uint _fee1,
-        uint _fee2,
-        uint _feeBase,
+        uint256 _fee1,
+        uint256 _fee2,
+        uint256 _feeBase,
         address _fee1Wallet,
         address _fee2Wallet) external {
-        require(
-            isTokenOwner(_token1, msg.sender) ||
-            isTokenOwner(_token2, msg.sender)
-            , "Ownable: only owner can call");
-        require(
-            IERC20(_token1).totalSupply() != 0 &&
-            IERC20(_token2).totalSupply() != 0
-            , "invalid address : address is not an ERC20");
-        require(
-            _fee1 <= 10**_feeBase && _fee1 >= 0 &&
-            _fee2 <= 10**_feeBase && _fee2 >= 0 &&
-            _feeBase <= 5 &&
-            _feeBase >= 2
-            , "invalid fee settings");
-        if (_fee1 > 0) {
-            require(_fee1Wallet != address(0), "fee wallet 1 cannot be zero address");
+        if (!isTokenOwner(_token1, msg.sender) && !isTokenOwner(_token2, msg.sender)) {
+            revert OnlyTokenOwner(msg.sender);
         }
-        if (_fee2 > 0) {
-            require(_fee2Wallet != address(0), "fee wallet 2 cannot be zero address");
+        if (IERC20(_token1).totalSupply() == 0) {
+            revert InvalidTokenAddress(_token1);
+        }
+        if (IERC20(_token2).totalSupply() == 0) {
+            revert InvalidTokenAddress(_token2);
+        }
+        bool feeSettings = _fee1 <= 10**_feeBase && _fee1 >= 0 &&
+            _fee2 <= 10**_feeBase && _fee2 >= 0 && _feeBase <= 5 && _feeBase >= 2;
+        if (!feeSettings) {
+            revert InvalidFeeSettings(_fee1, _fee2, _feeBase);
+        }
+        if (_fee1 > 0 && _fee1Wallet == address(0)) {
+            revert InvalidFeeWalletAddress(_fee1Wallet);
+        }
+        if (_fee2 > 0 && _fee2Wallet == address(0)) {
+            revert InvalidFeeWalletAddress(_fee2Wallet);
         }
 
         // compute fee for the parity
@@ -250,17 +331,21 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
     function takeTransfer(bytes32 _transferID) external {
         Delivery memory token1 = _token1ToDeliver[_transferID];
         Delivery memory token2 = _token2ToDeliver[_transferID];
-        require(token1.sender != address(0) && token2.sender != address(0), "transfer ID does not exist");
+        if (token1.sender == address(0) || token2.sender == address(0)) {
+            revert InvalidTransfer(_transferID);
+        }
+
         IERC20 token1Contract = IERC20(token1.token);
         IERC20 token2Contract = IERC20(token2.token);
-        require (
-            msg.sender == token2.sender ||
-            isTokenAgent(token1.token, msg.sender) ||
-            isTokenAgent(token2.token, msg.sender)
-            , "transfer has to be executed by the counterpart or by token agent");
-        require(token2Contract.balanceOf(token2.sender) >= token2.amount, "not enough tokens in balance");
-        require(token2Contract.allowance(token2.sender, address(this)) >= token2.amount,
-            "not enough allowance to transfer");
+        if (msg.sender != token2.sender && !isTokenAgent(token1.token, msg.sender) && !isTokenAgent(token2.token, msg.sender)) {
+            revert InvalidTransferTaker(_transferID, msg.sender);
+        }
+        if (token2Contract.balanceOf(token2.sender) < token2.amount) {
+            revert InvalidBalance(_transferID, token2.sender, token2.amount);
+        }
+        if (token2Contract.allowance(token2.sender, address(this)) < token2.amount) {
+            revert InvalidAllowance(_transferID, token2.sender, token2.amount);
+        }
 
         TxFees memory fees = computeFee(_transferID);
         token1Contract.transferFrom(token1.sender, token2.sender, (token1.amount - fees.txFee1));
@@ -271,6 +356,7 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         if (fees.txFee2 != 0) {
             token2Contract.transferFrom(token2.sender, fees.fee2Wallet, fees.txFee2);
         }
+        
         delete _token1ToDeliver[_transferID];
         delete _token2ToDeliver[_transferID];
         emit TransferExecuted(_transferID);
@@ -294,20 +380,22 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
     function takeMintTransfer(bytes32 _transferID) external {
         Delivery memory token1 = _token1ToDeliver[_transferID];
         Delivery memory token2 = _token2ToDeliver[_transferID];
-        require(token1.sender != address(0) && token2.sender != address(0), "transfer ID does not exist");
+        if (token1.sender == address(0) || token2.sender == address(0)) {
+            revert InvalidTransfer(_transferID);
+        }
+
         IERC20 token1Contract = IERC20(token1.token);
         IToken token2Contract = IToken(token2.token);
-        require (
-            isERC3643(token2.token) &&
-            isTokenOwner(token2.token, token2.sender) &&
-            isTokenAgent(token2.token, msg.sender)
-            , "mint has to be executed by minting token agent and minting token owner has to be taker");
-        
+        if (!isERC3643(token2.token) || !isTokenOwner(token2.token, token2.sender) || !isTokenAgent(token2.token, msg.sender)) {
+            revert InvalidMintTaker(_transferID, msg.sender);
+        }
+
         TxFees memory fees = computeFee(_transferID);
         token1Contract.transferFrom(token1.sender, token2.sender, (token1.amount - fees.txFee1));
         if (fees.txFee1 != 0) {
             token1Contract.transferFrom(token1.sender, fees.fee1Wallet, fees.txFee1);
         }
+
         // no fees on minting action, mint goes to maker from token2 contract
         token2Contract.mint(token1.sender, token2.amount);
         delete _token1ToDeliver[_transferID];
@@ -333,23 +421,29 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
     function takeBurnTransfer(bytes32 _transferID) external {
         Delivery memory token1 = _token1ToDeliver[_transferID];
         Delivery memory token2 = _token2ToDeliver[_transferID];
-        require(token1.sender != address(0) && token2.sender != address(0), "transfer ID does not exist");
+        if (token1.sender == address(0) || token2.sender == address(0)) {
+            revert InvalidTransfer(_transferID);
+        }
+
         IToken token1Contract = IToken(token1.token);
         IERC20 token2Contract = IERC20(token2.token);
-        require (
-            isERC3643(token1.token) &&
-            isTokenOwner(token1.token, token2.sender) &&
-            isTokenAgent(token1.token, msg.sender)
-            , "burn has to be executed by burning token agent and burning token owner has to be taker");
-        require(token2Contract.balanceOf(token2.sender) >= token2.amount, "not enough tokens in balance");
-        require(token2Contract.allowance(token2.sender, address(this)) >= token2.amount,
-            "not enough allowance to transfer");
+        if (!isERC3643(token1.token) || !isTokenOwner(token1.token, token2.sender) || !isTokenAgent(token1.token, msg.sender)) {
+            revert InvalidBurnTaker(_transferID, msg.sender);
+        }
+
+        if (token2Contract.balanceOf(token2.sender) < token2.amount) {
+            revert InvalidBalance(_transferID, token2.sender, token2.amount);
+        }
+        if (token2Contract.allowance(token2.sender, address(this)) < token2.amount) {
+            revert InvalidAllowance(_transferID, token2.sender, token2.amount);
+        }
 
         TxFees memory fees = computeFee(_transferID);
         token2Contract.transferFrom(token2.sender, token1.sender, (token2.amount - fees.txFee2));
         if (fees.txFee2 != 0) {
             token2Contract.transferFrom(token2.sender, fees.fee2Wallet, fees.txFee2);
         }
+        
         // no fees on burning action, burn happens for token1 contract on maker account 
         token1Contract.burn(token1.sender, token1.amount);
         delete _token1ToDeliver[_transferID];
@@ -372,13 +466,16 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
     function cancelTransfer(bytes32 _transferID) external {
         Delivery memory token1 = _token1ToDeliver[_transferID];
         Delivery memory token2 = _token2ToDeliver[_transferID];
-        require(token1.sender != address(0) && token2.sender != address(0), "transfer ID does not exist");
-        require (
-            msg.sender == token1.sender ||
-            msg.sender == token2.sender ||
-            isTokenAgent(token1.token, msg.sender) ||
-            isTokenAgent(token2.token, msg.sender)
-            , "you are not allowed to cancel this transfer");
+        if (token1.sender == address(0) || token2.sender == address(0)) {
+            revert InvalidTransfer(_transferID);
+        }
+
+        bool allowed = msg.sender == token1.sender || msg.sender == token2.sender ||
+            isTokenAgent(token1.token, msg.sender) || isTokenAgent(token2.token, msg.sender);
+        if (!allowed) {
+            revert InvalidTransferCanceller(_transferID, msg.sender);
+        }
+
         delete _token1ToDeliver[_transferID];
         delete _token2ToDeliver[_transferID];
         emit TransferCancelled(_transferID);
@@ -446,13 +543,15 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         TxFees memory fees;
         Delivery memory token1 = _token1ToDeliver[_transferID];
         Delivery memory token2 = _token2ToDeliver[_transferID];
-        require(token1.sender != address(0) && token2.sender != address(0), "transfer ID does not exist");
+        if (token1.sender == address(0) || token2.sender == address(0)) {
+            revert InvalidTransfer(_transferID);
+        }
         bytes32 parity = computeParity(token1.token, token2.token);
         TransferFee memory feeDetails = _transferFees[parity];
         if (feeDetails.token1Fee != 0 || feeDetails.token2Fee != 0 ){
-            uint _txFee1 =
+            uint256 _txFee1 =
             (token1.amount * feeDetails.token1Fee * 10**(feeDetails.feeBase - 2)) / (10**feeDetails.feeBase);
-            uint _txFee2 =
+            uint256 _txFee2 =
             (token2.amount * feeDetails.token2Fee * 10**(feeDetails.feeBase - 2)) / (10**feeDetails.feeBase);
             fees.txFee1 = _txFee1;
             fees.txFee2 = _txFee2;
@@ -527,13 +626,18 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
         uint256 _token2Amount,
         bool _isBurn
     ) internal {
-        require(IERC20(_token1).balanceOf(msg.sender) >= _token1Amount, "not enough tokens in balance");
-        if (!_isBurn) {
-            require(IERC20(_token1).allowance(msg.sender, address(this)) >= _token1Amount,
-                "not enough allowance to initiate transfer");
+        if (IERC20(_token1).balanceOf(msg.sender) < _token1Amount) {
+            revert InvalidBalance(0, msg.sender, _token1Amount);
         }
-        require (_counterpart != address(0), "counterpart address cannot be null");
-        require(IERC20(_token2).totalSupply() != 0, "invalid token2 address: address is not an ERC20");
+        if (!_isBurn && IERC20(_token1).allowance(msg.sender, address(this)) < _token1Amount) {
+            revert InvalidAllowance(0, msg.sender, _token1Amount);
+        }
+        if (_counterpart == address(0)) {
+            revert InvalidCounterpart();
+        }
+        if (IERC20(_token2).totalSupply() == 0) {
+            revert InvalidTokenAddress(_token2);
+        }
 
         // token1 sender, amount and address
         Delivery memory token1;
@@ -567,6 +671,6 @@ contract MarketplaceManager is Initializable, OwnableUpgradeable, UUPSUpgradeabl
                 token2.sender,
                 token2.token,
                 token2.amount);
-        _transferNonce++;
+        ++_transferNonce;
     }
 }
