@@ -28,8 +28,6 @@ contract CountryPermitModule is AbstractCountryModule {
 
     /**
      *  @dev permits country for tokens posession.
-     *  only a bound modular compliance contract can call this function
-     *  emits a `CountryPermitted` event
      *  @param _country ISO 3166-1 numeric standard code of the country to be permitted
      */
     function countryPermit(uint16 _country) public onlyComplianceCall {
@@ -39,8 +37,6 @@ contract CountryPermitModule is AbstractCountryModule {
 
     /**
      *  @dev removes country permission for tokens posession.
-     *  only a bound modular compliance contract can call this function
-     *  emits a `CountryPermissionRemoved` event
      *  @param _country ISO 3166-1 numeric standard code of the country whose permission is to be removed
      */
     function removeCountryPermission(uint16 _country) public onlyComplianceCall {
@@ -50,8 +46,6 @@ contract CountryPermitModule is AbstractCountryModule {
 
     /**
      *  @dev sets countries permission in batch.
-     *  only a bound modular compliance contract can call this function
-     *  emits `CountryPermitted` and `CountryPermissionRemoved` events
      *  @param _countries countries to be permitted/disallowed, should be expressed by numeric ISO 3166-1 standard code
      *  @param _permissions permissions to be set for the countries, true to permit, false to disallow
      */

@@ -13,11 +13,7 @@ contract MinInvestmentModule is AbstractModuleUpgradeable {
     /// accounts invested per modular compliance contract
     mapping(address => mapping(address => bool)) private _accountsInvested;
 
-    /**
-     *  this event is emitted when the min investment has been set.
-     *  `_compliance` is the modular compliance address.
-     *  `_limit` is the min amount of tokens to be invested.
-     */
+    /// this event is emitted when the min investment has been set for a modular compliance contract
     event MinInvestmentSet(address _compliance, uint256 _limit);
 
     /**
@@ -30,8 +26,6 @@ contract MinInvestmentModule is AbstractModuleUpgradeable {
 
     /**
      *  @dev sets min investment.
-     *  only a bound modular compliance contract can call this function
-     *  emits a `MinInvestmentSet` event
      *  @param _limit min amount of tokens to be invested
      */
     function setMinInvestment(uint256 _limit) external onlyComplianceCall {

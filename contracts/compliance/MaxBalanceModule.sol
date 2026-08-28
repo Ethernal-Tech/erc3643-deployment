@@ -10,11 +10,7 @@ contract MaxBalanceModule is AbstractModuleUpgradeable {
     /// max balances per modular compliance contract
     mapping(address => uint256) private _maxBalances;
 
-    /**
-     *  this event is emitted when the max balance has been set for a compliance bound.
-     *  `_compliance` is the modular compliance contract address.
-     *  `_maxBalance` is the max amount of tokens that a user can hold.
-     */
+    /// this event is emitted when the max balance has been set for a modular compliance contract
     event MaxBalanceSet(address _compliance, uint256 _maxBalance);
 
     /**
@@ -26,10 +22,8 @@ contract MaxBalanceModule is AbstractModuleUpgradeable {
     }
 
     /**
-     *  @dev sets max balance limit for a bound compliance contract
-     *  only a bound modular compliance contract can call this function
-     *  emits a `MaxBalanceSet` event
-     *  @param _maxBalance max amount of tokens owned by an individual
+     *  @dev sets max balance for a modular compliance contract which is calling this function
+     *  @param _maxBalance max amount of tokens an account can have
      */
     function setMaxBalance(uint256 _maxBalance) external onlyComplianceCall {
         _maxBalances[msg.sender] = _maxBalance;

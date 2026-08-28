@@ -8,12 +8,7 @@ contract GlobalLockInTransferModule is AbstractModuleUpgradeable {
     /// wait periods per compliance contract
     mapping(address => uint256) private _waitPeriods;
 
-    /**
-     *  this event is emitted when the wait period has been set.
-     *  the event is emitted by 'setWaitPeriod' function.
-     *  `_compliance` is the modular compliance contract address.
-     *  `_value` is the wait period in seconds.
-     */
+    /// this event is emitted when the wait period has been set for a modular compliance contract
     event WaitPeriod(address _compliance, uint256 _value);
 
     /**
@@ -26,8 +21,6 @@ contract GlobalLockInTransferModule is AbstractModuleUpgradeable {
 
     /**
      *  @dev set wait period for a compliance contract
-     *  only a bound modular compliance contract can call this function
-     *  emits a `WaitPeriod` event
      *  @param _waitPeriod the wait period in seconds
      */
     function setWaitPeriod(uint256 _waitPeriod) external onlyComplianceCall {

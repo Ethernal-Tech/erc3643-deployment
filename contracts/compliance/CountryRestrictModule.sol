@@ -28,8 +28,6 @@ contract CountryRestrictModule is AbstractCountryModule {
 
     /**
      *  @dev restricts country for tokens posession.
-     *  only a bound modular compliance contract can call this function
-     *  emits a `CountryRestricted` event
      *  @param _country ISO 3166-1 numeric standard code of the country to be restricted
      */
     function countryRestrict(uint16 _country) public onlyComplianceCall {
@@ -39,8 +37,6 @@ contract CountryRestrictModule is AbstractCountryModule {
 
     /**
      *  @dev removes country restriction for tokens posession.
-     *  only a bound modular compliance contract can call this function
-     *  emits a `CountryRestrictionRemoved` event
      *  @param _country ISO 3166-1 numeric standard code of the country whose restriction is to be removed
      */
     function removeCountryRestriction(uint16 _country) public onlyComplianceCall {
@@ -50,8 +46,6 @@ contract CountryRestrictModule is AbstractCountryModule {
 
     /**
      *  @dev sets countries restriction in batch.
-     *  only a bound modular compliance contract can call this function
-     *  emits `CountryRestricted` and `CountryRestrictionRemoved` events
      *  @param _countries countries to be restricted/unrestricted, should be expressed by numeric ISO 3166-1 standard code
      *  @param _restrictions restrictions to be set for the countries, true to restrict, false to unrestrict
      */
