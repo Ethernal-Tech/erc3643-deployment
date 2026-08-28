@@ -10,24 +10,10 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
     /// permitted transfers per modular compliance contract
     mapping(address => mapping(bytes32 => uint256)) private _transfersPermitted;
 
-    /**
-     *  this event is emitted whenever a transfer is permitted.
-     *  the event is emitted by 'transferPermit' function.
-     *  `_from` is the address of transfer sender.
-     *  `_to` is the address of transfer recipient.
-     *  `_amount` is the token amount to be sent.
-     *  `_token` is address of the token taking part in the transfer.
-     */
+    /// this event is emitted by 'transferPermit' function.
     event TransferPermitted(address _from, address _to, uint256 _amount, address _token);
 
-    /**
-     *  this event is emitted whenever a transfer permission is removed.
-     *  the event is emitted by 'removeTransferPermission' function.
-     *  `_from` is the address of transfer sender.
-     *  `_to` is the address of transfer recipient.
-     *  `_amount` is the token amount to be sent.
-     *  `_token` is address of the token taking part in the transfer.
-     */
+    /// this event is emitted by 'removeTransferPermission' function.
     event TransferPermissionRemoved(address _from, address _to, uint256 _amount, address _token);
 
     /**
@@ -48,11 +34,9 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
 
     /**
      *  @dev permits a transfer
-     *  only a bound modular compliance contract can call this function
-     *  emits a `TransferPermitted` event
-     *  @param _from the address of the transfer sender
-     *  @param _to the address of the transfer receiver
-     *  @param _amount the amount of tokens that `_from` would send to `_to`
+     *  @param _from address of the transfer sender
+     *  @param _to address of the transfer receiver
+     *  @param _amount amount of tokens that `_from` will send to `_to`
      */
     function transferPermit(address _from, address _to, uint256 _amount) public onlyComplianceCall {
         bytes32 transferHash = _computeTransferHash(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
@@ -63,11 +47,9 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
     /**
      *  @dev removes transfer permission
      *  requires the transfer to be previously permitted
-     *  only a bound modular compliance contract can call this function
-     *  emits an `TransferPermissionRemoved` event
-     *  @param _from the address of the transfer sender
-     *  @param _to the address of the transfer receiver
-     *  @param _amount the amount of tokens that `_from` was allowed to send to `_to`
+     *  @param _from address of the transfer sender
+     *  @param _to address of the transfer receiver
+     *  @param _amount amount of tokens that `_from` was allowed to send to `_to`
      */
     function removeTransferPermission(address _from, address _to, uint256 _amount) public onlyComplianceCall {
         bytes32 transferHash = _computeTransferHash(_from, _to, _amount, IModularCompliance(msg.sender).getTokenBound());
@@ -80,11 +62,9 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
 
     /**
      *  @dev permits transfers in batch
-     *  only a bound modular compliance contract can call this function
-     *  emits `_from.length` `TransferPermitted` events
-     *  @param _from the array of addresses of the transfer senders
-     *  @param _to the array of addresses of the transfer receivers
-     *  @param _amount the array of tokens amounts that `_from` would send to `_to`
+     *  @param _from array of addresses of the transfer senders
+     *  @param _to array of addresses of the transfer receivers
+     *  @param _amount array of tokens amounts that `_from` will send to `_to`
      */
     function batchTransfersPermit(address[] calldata _from, address[] calldata _to, uint256[] calldata _amount)
     external onlyComplianceCall {
@@ -100,11 +80,9 @@ contract TransferPermitModule is AbstractModuleUpgradeable {
     /**
      *  @dev removes transfers permission in batch
      *  requires all transfers in the batch to be previously permitted
-     *  only a bound modular compliance contract can call this function
-     *  emits `_from.length` `TransferPermissionRemoved` events
-     *  @param _from the array of addresses of the transfer senders
-     *  @param _to the array of addresses of the transfer receivers
-     *  @param _amount the array of token amounts that `_from` were allowed to send to `_to`
+     *  @param _from array of addresses of the transfer senders
+     *  @param _to array of addresses of the transfer receivers
+     *  @param _amount array of token amounts that `_from` were allowed to send to `_to`
      */
     function batchRemoveTransfersPermission(address[] calldata _from, address[] calldata _to, uint256[] calldata _amount)
     external onlyComplianceCall {

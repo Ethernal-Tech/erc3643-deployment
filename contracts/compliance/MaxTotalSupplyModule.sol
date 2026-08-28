@@ -10,11 +10,7 @@ contract MaxTotalSupplyModule is AbstractModuleUpgradeable {
     /// max total supplies per modular compliance contract
     mapping(address => uint256) private _maxTotalSupplies;
 
-    /**
-     *  this event is emitted when the max total supply has been set.
-     *  `_compliance` is the modular compliance address.
-     *  `_limit` is the max amount of tokens in circulation.
-     */
+    /// this event is emitted when the max total supply has been set for a modular compliance contract
     event MaxTotalSupplySet(address _compliance, uint256 _limit);
 
     /**
@@ -32,11 +28,8 @@ contract MaxTotalSupplyModule is AbstractModuleUpgradeable {
     }
 
     /**
-     *  @dev sets max total supply.
-     *  max total supply has to be smaller or equal to the actual supply.
-     *  only a bound modular compliance contract can call this function
-     *  emits a `MaxTotalSupplySet` event
-     *  @param _limit max amount of tokens to be created
+     *  @dev sets max total supply for a modular compliance contract which is calling this function
+     *  @param _limit max amount of tokens that can be minted for the bound token
      */
     function setMaxTotalSupply(uint256 _limit) external onlyComplianceCall {
         if (_limit < IToken(IModularCompliance(msg.sender).getTokenBound()).totalSupply()) {
