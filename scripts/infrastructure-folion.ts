@@ -144,6 +144,7 @@ async function main() {
   const txTransferOwnership = await identityFactory.connect(deployer).transferOwnership(await gateway.getAddress());
   await txTransferOwnership.wait();
 
+  console.log("TREXFactory address -> %s", (await trexFactory.getAddress()).toString());
   console.log("TREXGateway address -> %s", (await trexGateway.getAddress()).toString());
   console.log("Gateway address -> %s", (await gateway.getAddress()).toString());
 
@@ -377,6 +378,7 @@ async function main() {
   await transferOwnershipIRS.wait();
 
   const addresses = {
+    trexFactory: await trexFactory.getAddress(),
     trexGateway: await trexGateway.getAddress(),
     gateway: await gateway.getAddress(),
     identityRegistryStorage: await identityRegistryStorageProxy.getAddress(),
